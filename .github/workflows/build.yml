@@ -25,4 +25,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kiew-${{ runner.os }}
-          path: target/release/kiew
+          path: target/release/kiew*
