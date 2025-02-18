@@ -15,4 +15,11 @@ pub enum Commands {
         #[arg(short = 'e', long = "element")]
         element: String,
     },
+    #[command(name = "find")]
+    Find {
+        #[arg(short = 'w', long = "web")]
+        website: String,
+        #[arg(short = 'e', long = "element")]
+        element: String,
+    },
 }
