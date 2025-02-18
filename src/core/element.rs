@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use anyhow::{Context, Result};
 use reqwest::Client;
 use scraper::Html;
@@ -23,6 +25,7 @@ pub async fn element_count(website: &str, element: &str) -> Result<()> {
     let error_color = LogLevel::Error.fmt();
     let success_color = LogLevel::Success.fmt();
     let warn_color = LogLevel::Warning.fmt();
+    let start_time = Instant::now();
 
     let response = client.get(website).header(reqwest::header::USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
     .send().await.with_context(|| format!("{} Cannot get response", error_color))?;
@@ -42,9 +45,17 @@ pub async fn element_count(website: &str, element: &str) -> Result<()> {
 
     match element_count {
         0 => println!("{} Could not find any element.", warn_color),
-        1 => println!("{} Found one {} element: {}.", success_color, element, element_count),
-        _ => println!("{} Found many {} elements: {}.", success_color, element, element_count),
+        1 => println!(
+            "{} Found one {} element: {}.",
+            success_color, element, element_count
+        ),
+        _ => println!(
+            "{} Found many {} elements: {}.",
+            success_color, element, element_count
+        ),
     }
+    let end_time = start_time.elapsed();
+    println!("{} Finished in {:.2?}", success_color, end_time);
 
     Ok(())
 } // fn element_count
