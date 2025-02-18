@@ -2,7 +2,7 @@ use clap::Parser;
 
 use crate::{
     cli::{CommandLineInterface, Commands},
-    core::element::element_count,
+    core::{element::element_count, find_element::find_element},
     styles::colors::LogLevel,
 };
 
@@ -15,6 +15,13 @@ pub async fn handles_commands() {
         Commands::Match { website, element } => match element_count(&website, &element).await {
             Ok(()) => {}
             Err(error) => eprintln!("{} Get element of website error: {}", error_color, error),
+        },
+        Commands::Find { website, element } => match find_element(&website, &element).await {
+            Ok(()) => {}
+            Err(error) => eprintln!(
+                "{} Find element of website failed, please check your website URL and try again\n{}",
+                error_color, error
+            ),
         },
     }
 }
