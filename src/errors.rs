@@ -2,9 +2,9 @@
 pub enum ErrorsType {
     /// When cannot find any HTML element.
     ElementNotFound,
-    /// When Parse HTML is failed
+    /// When parsing HTML is fails
     HtmlParseFailed,
-    /// When request is failed
+    /// When the request is fails
     RequestFailed,
 }
 impl ErrorsType {
