@@ -8,7 +8,7 @@ pub struct CommandLineInterface {
     pub commands: Commands,
 }
 
-/// s
+/// Define all commands
 #[derive(Subcommand)]
 pub enum Commands {
     /// Match command
