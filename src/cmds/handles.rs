@@ -16,6 +16,7 @@ pub async fn handles_commands() {
             Ok(()) => {}
             Err(error) => eprintln!("{error_color} Fatal error with status: {error}"),
         },
+
         Commands::Find { website, element } => match find_element(&website, &element).await {
             Ok(()) => {}
             Err(error) => eprintln!("{error_color} Fatal error with status: {error}"),
