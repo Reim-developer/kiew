@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use crate::styles::colors::LogLevel;
+use crate::{errors::ErrorsType, styles::colors::LogLevel};
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{format, Cell, Row, Table};
@@ -22,7 +22,6 @@ use scraper::{Html, Selector};
 ///
 pub async fn find_element(website: &str, element: &str) -> Result<()> {
     let client = Client::new();
-    let error_color = LogLevel::Error.fmt();
     let success_color = LogLevel::Success.fmt();
     let process_bar = ProgressBar::new_spinner();
     let mut table = Table::new();
@@ -35,41 +34,34 @@ pub async fn find_element(website: &str, element: &str) -> Result<()> {
         Cell::new("Element Class"),
     ]));
 
-    match ProgressStyle::default_spinner()
+    if let Err(error) = ProgressStyle::default_spinner()
         .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
         .template("{spinner} {msg}")
     {
-        Ok(style) => process_bar.set_style(style),
-        Err(error) => {
-            eprintln!(
-                "{} Cannot set template of process bar with error {}",
-                error_color, error
-            );
-        }
+        return Err(anyhow!("{}", error));
     }
 
     process_bar.set_message("Processing...");
     process_bar.enable_steady_tick(Duration::from_millis(100));
 
     let response = client.get(website)
+        .timeout(Duration::from_secs(15))
     .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
-    .send().await.with_context(|| format!("{} Cannot get response", error_color))?;
+    .send().await.with_context(|| ErrorsType::RequestFailed.as_str())?;
 
     let html_content = response
         .text()
         .await
-        .with_context(|| format!("{} Cannot get HTML source", error_color))?;
+        .with_context(|| ErrorsType::HtmlParseFailed.as_str())?;
 
     let website_source = Html::parse_document(&html_content);
 
-    let selecto_query = Selector::parse(element)
-        .map_err(|error| anyhow!("{} Cannot parse element with error {}", error_color, error))?;
+    let selector_query = Selector::parse(element).map_err(|error| anyhow!("{}", error))?;
 
-    let mut elements = website_source.select(&selecto_query).peekable();
+    let mut elements = website_source.select(&selector_query).peekable();
 
     if elements.peek().is_none() {
-        eprintln!("{} No matching element found.", error_color);
-        return Err(anyhow!("NO_MATCHING_ELEMENT_FOUND"));
+        return Err(anyhow!("{}", ErrorsType::ElementNotFound.as_str()));
     }
 
     for element in elements {
@@ -88,7 +80,7 @@ pub async fn find_element(website: &str, element: &str) -> Result<()> {
         table.printstd();
     });
     let end_time = start_time.elapsed();
-    
+
     process_bar.finish_and_clear();
     println!("{} Finished in {:.2?}", success_color, end_time);
 
