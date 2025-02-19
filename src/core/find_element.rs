@@ -20,6 +20,12 @@ use scraper::{Html, Selector};
 /// - `website` Website you want to check.
 /// - `element` Your CSS query. Use * to query all elements.
 ///
+/// # Errors
+/// 
+/// - `REQUEST_FAILED` Request is fails.
+/// - `HTML_PARSE_FAILED` Parsing HTML is fails.
+/// - `ELEMENT_NOT_FOUND` Could not find any element.
+/// 
 pub async fn find_element(website: &str, element: &str) -> Result<()> {
     let client = Client::new();
     let success_color = colors::LogLevel::Success.fmt();
@@ -64,10 +70,10 @@ pub async fn find_element(website: &str, element: &str) -> Result<()> {
         return Err(anyhow!("{}", ErrorsType::ElementNotFound.as_str()));
     }
 
-    for element in elements {
-        let element_type = element.value().name();
-        let element_class = element.value().attr("class").unwrap_or("No class");
-        let element_id = element.value().attr("id").unwrap_or("No id");
+    for webpage_element in elements {
+        let element_type = webpage_element.value().name();
+        let element_class = webpage_element.value().attr("class").unwrap_or("No class");
+        let element_id = webpage_element.value().attr("id").unwrap_or("No id");
 
         table.add_row(Row::new(vec![
             Cell::new(element_type),
