@@ -5,6 +5,7 @@
 ## Table of contents
 - [Quick Start](#quick-start)
 - [Build Requirements](#build-requirements)
+- [Sample Usage](#sample-usage)
 
 # Quick Start:
 #### Installation:
