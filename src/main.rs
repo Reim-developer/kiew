@@ -1,7 +1,6 @@
-//! Kiew is a Command Line Interface, for scraping website.
 use kiew::cmds::handles::handles_commands;
 
-#[doc = "Kiew"]
+#[doc = "Kiew is a Command Line Interface, for scraping website"]
 #[tokio::main]
 
 async fn main() {
