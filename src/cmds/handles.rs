@@ -17,7 +17,11 @@ pub async fn handles_commands() {
             Err(error) => eprintln!("{error_color} Fatal error with status: {error}"),
         },
 
-        Commands::Find { website, element } => match find_element(&website, &element).await {
+        Commands::Find {
+            website,
+            element,
+            debug_mode,
+        } => match find_element(&website, &element, debug_mode).await {
             Ok(()) => {}
             Err(error) => eprintln!("{error_color} Fatal error with status: {error}"),
         },
