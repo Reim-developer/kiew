@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use crate::{errors::ErrorsType, styles::colors::LogLevel};
+use crate::{colors, errors::ErrorsType};
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{format, Cell, Row, Table};
@@ -22,7 +22,7 @@ use scraper::{Html, Selector};
 ///
 pub async fn find_element(website: &str, element: &str) -> Result<()> {
     let client = Client::new();
-    let success_color = LogLevel::Success.fmt();
+    let success_color = colors::LogLevel::Success.fmt();
     let process_bar = ProgressBar::new_spinner();
     let mut table = Table::new();
 
@@ -82,7 +82,7 @@ pub async fn find_element(website: &str, element: &str) -> Result<()> {
     let end_time = start_time.elapsed();
 
     process_bar.finish_and_clear();
-    println!("{} Finished in {:.2?}", success_color, end_time);
+    println!("{success_color} Finished in {end_time:.2?}");
 
     Ok(())
 }
