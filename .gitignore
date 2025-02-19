@@ -1,1 +1,5 @@
+# Binary
 /target
+
+# Ignore all log test files
+*.txt
