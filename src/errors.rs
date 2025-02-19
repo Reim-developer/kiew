@@ -6,6 +6,8 @@ pub enum ErrorsType {
     HtmlParseFailed,
     /// When the request is fails
     RequestFailed,
+    /// When website URL not found
+    UrlNotFound,
 }
 impl ErrorsType {
     /// Convert Error Type to str
@@ -14,6 +16,7 @@ impl ErrorsType {
             Self::ElementNotFound => "ELEMENT_NOT_FOUND",
             Self::HtmlParseFailed => "HTML_PARSE_FAILED",
             Self::RequestFailed => "REQUEST_FAILED",
+            Self::UrlNotFound => "URL_NOT_FOUND",
         }
     }
 }
