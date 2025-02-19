@@ -28,8 +28,13 @@ pub enum Commands {
         /// This website target
         #[arg(short = 'w', long = "web")]
         website: String,
+
         /// This element you want match
         #[arg(short = 'e', long = "element")]
         element: String,
+
+        /// Is debug mode enabled?
+        #[arg(short = 'd', long = "debug", default_value = "false")]
+        debug_mode: bool,
     },
 }
