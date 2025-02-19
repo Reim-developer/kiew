@@ -2,8 +2,8 @@ use clap::Parser;
 
 use crate::{
     cli::{CommandLineInterface, Commands},
+    colors::LogLevel,
     core::{element::element_count, find_element::find_element},
-    styles::colors::LogLevel,
 };
 
 /// Handles all CLI commmands
@@ -14,11 +14,11 @@ pub async fn handles_commands() {
     match args.commands {
         Commands::Match { website, element } => match element_count(&website, &element).await {
             Ok(()) => {}
-            Err(error) => eprintln!("{} Fatal error with status: {}", error_color, error),
+            Err(error) => eprintln!("{error_color} Fatal error with status: {error}"),
         },
         Commands::Find { website, element } => match find_element(&website, &element).await {
             Ok(()) => {}
-            Err(error) => eprintln!("{} Fatal error with status: {}", error_color, error),
+            Err(error) => eprintln!("{error_color} Fatal error with status: {error}"),
         },
     }
 }
