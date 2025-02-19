@@ -24,18 +24,7 @@
     clippy::missing_assert_message
 )]
 
-use cmds::handles::handles_commands;
-
-/// CLI module, to define all commands of CLI
-mod cli;
-/// For handles all commands of CLI
-mod cmds;
-/// Define Colors/LogLevel
-mod colors;
-/// For logic/core of CLI
-mod core;
-/// Define all error types
-mod errors;
+use kiew::cmds::handles::handles_commands;
 
 #[doc = "Kiew"]
 #[tokio::main]
