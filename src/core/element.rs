@@ -1,10 +1,12 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
+use indicatif::{ProgressBar, ProgressStyle};
+use prettytable::{format::consts::FORMAT_BOX_CHARS, Cell, Row, Table};
 use reqwest::Client;
 use scraper::Html;
 
-use crate::styles::colors::LogLevel;
+use crate::{errors::ErrorsType, styles::colors::LogLevel};
 
 /// Counter the number of elements matching a CSS query on a given website.
 ///
@@ -22,40 +24,62 @@ use crate::styles::colors::LogLevel;
 ///
 pub async fn element_count(website: &str, element: &str) -> Result<()> {
     let client = Client::new();
-    let error_color = LogLevel::Error.fmt();
     let success_color = LogLevel::Success.fmt();
-    let warn_color = LogLevel::Warning.fmt();
+    let info_color = LogLevel::Info.fmt();
+    let process_bar = ProgressBar::new_spinner();
     let start_time = Instant::now();
 
-    let response = client.get(website).header(reqwest::header::USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
-    .send().await.with_context(|| format!("{} Cannot get response", error_color))?;
+    let mut table = Table::new();
+    table.set_format(*FORMAT_BOX_CHARS);
+    table.add_row(Row::new(vec![
+        Cell::new("Element Type"),
+        Cell::new("Element(s) Count"),
+    ]));
+
+    if let Err(error) = ProgressStyle::default_spinner()
+        .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
+        .template("{spinner} {msg}")
+    {
+        return Err(anyhow!("{}", error));
+    }
+
+    process_bar.set_message("Processing...");
+    process_bar.enable_steady_tick(Duration::from_millis(100));
+
+    let response = client.get(website)
+        .timeout(Duration::from_secs(15))
+        .header(reqwest::header::USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
+    .send().await.with_context(|| ErrorsType::RequestFailed.as_str())?;
 
     let html_content = response
         .text()
         .await
-        .with_context(|| format!("{} Cannot get HTML source", error_color))?;
+        .with_context(|| ErrorsType::HtmlParseFailed.as_str())?;
 
     let document = Html::parse_document(&html_content);
 
-    let selector_query = scraper::Selector::parse(element).map_err(|error| {
-        anyhow::anyhow!("{} Cannot parse element with error {}", error_color, error)
-    })?;
+    let selector_query =
+        scraper::Selector::parse(element).map_err(|error| anyhow::anyhow!("{}", error))?;
 
     let element_count = document.select(&selector_query).count();
 
-    match element_count {
-        0 => println!("{} Could not find any element.", warn_color),
-        1 => println!(
-            "{} Found one {} element: {}.",
-            success_color, element, element_count
-        ),
-        _ => println!(
-            "{} Found many {} elements: {}.",
-            success_color, element, element_count
-        ),
+    if element_count == 0 {
+        return Err(anyhow!("{}", ErrorsType::ElementNotFound.as_str()));
     }
-    let end_time = start_time.elapsed();
-    println!("{} Finished in {:.2?}", success_color, end_time);
 
+    let end_time = start_time.elapsed();
+    process_bar.finish_and_clear();
+
+    table.add_row(Row::new(vec![
+        Cell::new(element),
+        Cell::new(format!("{}", element_count).as_str()),
+    ]));
+    table.printstd();
+
+    println!("{} Finished in {:.2?}", success_color, end_time);
+    println!(
+        "{} To find any specify element infomation, just use: kiew find -w {} -e {}",
+        info_color, website, element
+    );
     Ok(())
 } // fn element_count
