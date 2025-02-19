@@ -1,10 +1,13 @@
-use std::time::{Duration, Instant};
+use std::{
+    fs::File,
+    time::{Duration, Instant},
+};
 
 use crate::{colors, errors::ErrorsType};
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{format, Cell, Row, Table};
-use reqwest::{header::USER_AGENT, Client};
+use reqwest::{header::USER_AGENT, Client, Url};
 use scraper::{Html, Selector};
 
 /// Find HTML element of website and print this info, if exist.
@@ -21,12 +24,12 @@ use scraper::{Html, Selector};
 /// - `element` Your CSS query. Use * to query all elements.
 ///
 /// # Errors
-/// 
+///
 /// - `REQUEST_FAILED` Request is fails.
 /// - `HTML_PARSE_FAILED` Parsing HTML is fails.
 /// - `ELEMENT_NOT_FOUND` Could not find any element.
-/// 
-pub async fn find_element(website: &str, element: &str) -> Result<()> {
+///
+pub async fn find_element(website: &str, element: &str, debug_mode: bool) -> Result<()> {
     let client = Client::new();
     let success_color = colors::LogLevel::Success.fmt();
     let process_bar = ProgressBar::new_spinner();
@@ -89,6 +92,25 @@ pub async fn find_element(website: &str, element: &str) -> Result<()> {
 
     process_bar.finish_and_clear();
     println!("{success_color} Finished in {end_time:.2?}");
+
+    if debug_mode {
+        let website_url = Url::parse(website).map_err(|error| anyhow!("{error}"))?;
+
+        let website_name = website_url
+            .host_str()
+            .ok_or_else(|| anyhow!(ErrorsType::UrlNotFound.as_str()))?;
+
+        let mut log_file =
+            File::create(format!("{website_name}.txt")).map_err(|error| anyhow!("{error}"))?;
+
+        table
+            .print(&mut log_file)
+            .map_err(|error| anyhow!("{error}"))?;
+
+        println!("{success_color} Saved log as {website_name}.txt");
+    } else {
+        println!("{success_color} To enable debug mode, just type: kiew -w {website} -e {element} --debug");
+    }
 
     Ok(())
 }
