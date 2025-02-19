@@ -14,14 +14,11 @@ pub async fn handles_commands() {
     match args.commands {
         Commands::Match { website, element } => match element_count(&website, &element).await {
             Ok(()) => {}
-            Err(error) => eprintln!("{} Get element of website error: {}", error_color, error),
+            Err(error) => eprintln!("{} Fatal error with status: {}", error_color, error),
         },
         Commands::Find { website, element } => match find_element(&website, &element).await {
             Ok(()) => {}
-            Err(error) => eprintln!(
-                "{} Find element of website failed, please check your website URL and try again\n{}",
-                error_color, error
-            ),
+            Err(error) => eprintln!("{} Fatal error with status: {}", error_color, error),
         },
     }
 }
