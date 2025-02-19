@@ -6,7 +6,7 @@ use prettytable::{format::consts::FORMAT_BOX_CHARS, Cell, Row, Table};
 use reqwest::Client;
 use scraper::Html;
 
-use crate::{errors::ErrorsType, styles::colors::LogLevel};
+use crate::{colors::LogLevel, errors::ErrorsType};
 
 /// Counter the number of elements matching a CSS query on a given website.
 ///
@@ -72,14 +72,13 @@ pub async fn element_count(website: &str, element: &str) -> Result<()> {
 
     table.add_row(Row::new(vec![
         Cell::new(element),
-        Cell::new(format!("{}", element_count).as_str()),
+        Cell::new(format!("{element_count}").as_str()),
     ]));
     table.printstd();
 
-    println!("{} Finished in {:.2?}", success_color, end_time);
+    println!("{success_color} Finished in {end_time:.2?}");
     println!(
-        "{} To find any specify element infomation, just use: kiew find -w {} -e {}",
-        info_color, website, element
+        "{info_color} To find any specify element infomation, just use: kiew find -w {website} -e {element}"
     );
     Ok(())
 } // fn element_count
