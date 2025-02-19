@@ -23,11 +23,11 @@ use crate::{colors::LogLevel, errors::ErrorsType};
 /// - `element` Your CSS query. Use * to query all elements.
 ///
 /// # Errors
-/// 
+///
 /// - `REQUEST_FAILED` Request is fails.
 /// - `HTML_PARSE_FAILED` Parsing HTML is fails.
 /// - `ELEMENT_NOT_FOUND` Could not find any element.
-/// 
+///
 pub async fn element_count(website: &str, element: &str) -> Result<()> {
     let client = Client::new();
     let success_color = LogLevel::Success.fmt();
