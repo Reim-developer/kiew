@@ -109,8 +109,8 @@ pub async fn find_element(website: &str, element: &str, debug_mode: bool) -> Res
 
         println!("{success_color} Saved log as {website_name}.txt");
     } else {
-        println!("{success_color} To enable debug mode, just type: kiew -w {website} -e {element} --debug");
+        println!("{success_color} To enable debug mode, just type: kiew find -w {website} -e {element} --debug");
     }
 
     Ok(())
-}
+} // fn find_element
