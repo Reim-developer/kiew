@@ -3,3 +3,4 @@
 
 # Ignore all log test files
 *.txt
+*.json
