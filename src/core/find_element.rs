@@ -1,14 +1,74 @@
 use std::{
-    fs::File,
-    time::{Duration, Instant},
+    fs::File, io::Write, time::{Duration, Instant}
 };
 
-use crate::{colors, errors::ErrorsType};
+use crate::{colors::{self, LogLevel}, errors::ErrorsType};
+use serde_json::{json, to_string_pretty, Map, Value};
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{format, Cell, Row, Table};
 use reqwest::{header::USER_AGENT, Client, Url};
 use scraper::{Html, Selector};
+
+/// For save log as txt file
+fn save_as_txt(website: &str, website_element: &str, success_color: &String, info_color: &str, table: &Table) -> Result<()> {
+    let website_url = Url::parse(website).map_err(|error| anyhow!("{error}"))?;
+
+    let website_name = website_url
+        .host_str()
+        .ok_or_else(|| anyhow!(ErrorsType::UrlNotFound.as_str()))?;
+
+    let mut log_file =
+        File::create(format!("{website_name}.txt")).map_err(|error| anyhow!("{error}"))?;
+
+    table
+        .print(&mut log_file)
+        .map_err(|error| anyhow!("{error}"))?;
+
+    println!("{success_color} Saved log as {website_name}.txt");
+    println!("{info_color} To customize your save log, just use kiew find -w {website} -e {website_element} --debug -l json/markdown/html");
+
+    Ok(())
+}
+
+/// For save log as JSON
+fn save_json(website: &str, elements: Vec<(&str, &str, &str)>, success_color: &String) -> Result<()> {
+    let website_url = Url::parse(website).map_err(|error| 
+        anyhow!("{error}")
+    )?;
+    let website_name = website_url.host_str().ok_or_else(|| anyhow!(ErrorsType::UrlNotFound.as_str()))?;
+
+    let mut element_map: Map<String, Value> = Map::new();
+    for (element_type, element_id, element_class) in elements {
+        let entry = element_map.entry(element_type.to_string()).or_insert_with(|| json!([]));
+
+        if let Value::Array(array) = entry {
+            array.push(json!({
+                "Element ID": element_id,
+                "Element Class": element_class
+            }));
+        };
+    }
+
+    let json_raw_data = json!({
+        "Element": element_map
+    });
+
+    let json_str= to_string_pretty(&json_raw_data).map_err(|error| {
+        anyhow!("{error}")
+    })?;
+
+    let mut log_file = File::create(format!("{website_name}.json")).map_err(|error| {
+        anyhow!("{error}")
+    })?;
+    log_file.write_all(json_str.as_bytes()).map_err(|error| {
+        anyhow!("{error}")
+    })?;
+
+    println!("{success_color} Saved log as {website_name}.json");
+
+    Ok(())
+}
 
 /// Find HTML element of website and print this info, if exist.
 /// # Example
@@ -29,10 +89,11 @@ use scraper::{Html, Selector};
 /// - `HTML_PARSE_FAILED` Parsing HTML is fails.
 /// - `ELEMENT_NOT_FOUND` Could not find any element.
 ///
-pub async fn find_element(website: &str, element: &str, debug_mode: bool) -> Result<()> {
+pub async fn find_element(website: &str, element: &str, debug_mode: bool, log_type: &str) -> Result<()> {
     let client = Client::new();
     let success_color = colors::LogLevel::Success.fmt();
     let process_bar = ProgressBar::new_spinner();
+    let mut element_vec = Vec::new();
     let mut table = Table::new();
 
     let start_time = Instant::now();
@@ -83,6 +144,8 @@ pub async fn find_element(website: &str, element: &str, debug_mode: bool) -> Res
             Cell::new(element_id),
             Cell::new(element_class),
         ]));
+
+        element_vec.push((element_type, element_id, element_class));
     }
 
     process_bar.suspend(|| {
@@ -94,20 +157,12 @@ pub async fn find_element(website: &str, element: &str, debug_mode: bool) -> Res
     println!("{success_color} Finished in {end_time:.2?}");
 
     if debug_mode {
-        let website_url = Url::parse(website).map_err(|error| anyhow!("{error}"))?;
-
-        let website_name = website_url
-            .host_str()
-            .ok_or_else(|| anyhow!(ErrorsType::UrlNotFound.as_str()))?;
-
-        let mut log_file =
-            File::create(format!("{website_name}.txt")).map_err(|error| anyhow!("{error}"))?;
-
-        table
-            .print(&mut log_file)
-            .map_err(|error| anyhow!("{error}"))?;
-
-        println!("{success_color} Saved log as {website_name}.txt");
+        let info_color = LogLevel::Info.fmt();
+        match log_type.to_lowercase().as_str() {
+            "json" => save_json(website, element_vec, &success_color)?,
+            "md" | "markdown" => println!("Markdown debug"),
+            _=> save_as_txt(website, element, &success_color, &info_color, &table)?,
+        }
     } else {
         println!("{success_color} To enable debug mode, just type: kiew find -w {website} -e {element} --debug");
     }
