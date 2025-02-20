@@ -36,5 +36,10 @@ pub enum Commands {
         /// Is debug mode enabled?
         #[arg(short = 'd', long = "debug", default_value = "false")]
         debug_mode: bool,
+        
+        /// For custom log type. such as JSON, Markdown, HTML.
+        /// Default as text (*.txt) file
+        #[arg(short = 'l', long = "logtype", default_value = "txt")]
+        log_type: String
     },
 }
