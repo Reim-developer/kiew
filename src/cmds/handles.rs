@@ -21,7 +21,8 @@ pub async fn handles_commands() {
             website,
             element,
             debug_mode,
-        } => match find_element(&website, &element, debug_mode).await {
+            log_type,
+        } => match find_element(&website, &element, debug_mode, &log_type).await {
             Ok(()) => {}
             Err(error) => eprintln!("{error_color} Fatal error with status: {error}"),
         },
