@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{format::consts::FORMAT_BOX_CHARS, Cell, Row, Table};
-use reqwest::Client;
+use reqwest::{header::USER_AGENT, Client};
 use scraper::Html;
 
 use crate::{colors::LogLevel, errors::ErrorsType};
@@ -54,7 +54,7 @@ pub async fn element_count(website: &str, element: &str) -> Result<()> {
 
     let response = client.get(website)
         .timeout(Duration::from_secs(15))
-        .header(reqwest::header::USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
+        .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
     .send().await.with_context(|| ErrorsType::RequestFailed.as_str())?;
 
     let html_content = response
