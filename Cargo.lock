@@ -826,17 +826,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "io-uring"
-version = "0.7.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab01638bb6a279897b7691f87f3f3c232451711fd419a69ced980ce61074fa46"
-dependencies = [
- "bitflags",
- "cfg-if",
- "libc",
-]
-
-[[package]]
 name = "ipnet"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -882,7 +871,6 @@ dependencies = [
  "anyhow",
  "clap",
  "indicatif",
- "io-uring",
  "libc",
  "owo-colors",
  "prettytable",
