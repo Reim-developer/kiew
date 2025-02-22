@@ -12,7 +12,6 @@ categories = ["command-line-interface"]
 [dependencies]
 anyhow = "1.0.95"
 clap = { version = "4.5.29", features = ["derive"] }
-cursive = "0.21.1"
 indicatif = "0.17.11"
 owo-colors = "4.1.0"
 prettytable = "0.10.0"
