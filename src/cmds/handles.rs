@@ -1,9 +1,9 @@
 use clap::Parser;
 
 use crate::{
-    cli::{CommandLineInterface, Commands},
+    cli::{CommandLineInterface, Commands, OptionsScraping::Href},
     colors::LogLevel,
-    core::{element::element_count, find_element::find_element},
+    core::{crawl_href::href_scraper, element::element_count, find_element::find_element},
 };
 
 /// Handles all CLI commmands
@@ -25,6 +25,14 @@ pub async fn handles_commands() {
         } => match find_element(&website, &element, debug_mode, &log_type).await {
             Ok(()) => {}
             Err(error) => eprintln!("{error_color} Fatal error with status: {error}"),
+        },
+
+        Commands::Crawl { options } => match options {
+            Href { website_url } => {
+                if let Err(error) = href_scraper(&website_url).await {
+                    eprintln!("{error_color} Fatal: {error}");
+                }
+            }
         },
     }
 }
