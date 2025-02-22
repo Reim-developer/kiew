@@ -1,5 +1,21 @@
 use clap::{Parser, Subcommand};
 
+/// Options for scraping website
+#[derive(Subcommand)]
+pub enum OptionsScraping {
+    /// Find all href in website
+    Href {
+        /// Argument: Website URL
+        /// - Short argument:
+        ///- `w` `<WEBSITE_URL>`   
+        ///
+        /// - Long arugment:
+        ///- `web` `<WEBSITE_URL>`
+        #[arg(short = 'w', long = "web")]
+        website_url: String,
+    },
+}
+
 /// Define all commands of CLI
 #[derive(Parser)]
 pub struct CommandLineInterface {
@@ -41,5 +57,13 @@ pub enum Commands {
         /// Default as text (*.txt) file
         #[arg(short = 'l', long = "logtype", default_value = "txt")]
         log_type: String,
+    },
+
+    /// Scrper website with customize option
+    #[command(name = "crawl")]
+    Crawl {
+        /// Option for scraper website
+        #[command(subcommand)]
+        options: OptionsScraping,
     },
 }
