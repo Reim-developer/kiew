@@ -10,14 +10,6 @@ use crate::{colors::LogLevel, errors::ErrorsType};
 
 /// Counter the number of elements matching a CSS query on a given website.
 ///
-/// # Example
-/// ```rust
-/// let my_website = "https://example.com";
-/// let my_css_query = "div#example"; // div tag with example id
-///
-/// element_count(my_website, my_css_query);
-///
-/// ```
 /// # Parameters:
 /// - `website` Website you want to check.
 /// - `element` Your CSS query. Use * to query all elements.
