@@ -137,6 +137,9 @@ pub mod core {
     /// To find element of website and show
     /// all infomation, if this exist
     pub mod find_element;
+
+    /// Scraper all href URL in website
+    pub mod crawl_href;
 }
 
 /// CLI module, to define all commands of CLI
