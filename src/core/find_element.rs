@@ -1,17 +1,28 @@
 use std::{
-    fs::File, io::Write, time::{Duration, Instant}
+    fs::File,
+    io::Write,
+    time::{Duration, Instant},
 };
 
-use crate::{colors::{self, LogLevel}, errors::ErrorsType};
-use serde_json::{json, to_string_pretty, Map, Value};
+use crate::{
+    colors::{self, LogLevel},
+    errors::ErrorsType,
+};
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{format, Cell, Row, Table};
 use reqwest::{header::USER_AGENT, Client, Url};
 use scraper::{Html, Selector};
+use serde_json::{json, to_string_pretty, Map, Value};
 
 /// For save log as txt file
-fn save_as_txt(website: &str, website_element: &str, success_color: &String, info_color: &str, table: &Table) -> Result<()> {
+fn save_as_txt(
+    website: &str,
+    website_element: &str,
+    success_color: &String,
+    info_color: &str,
+    table: &Table,
+) -> Result<()> {
     let website_url = Url::parse(website).map_err(|error| anyhow!("{error}"))?;
 
     let website_name = website_url
@@ -32,15 +43,21 @@ fn save_as_txt(website: &str, website_element: &str, success_color: &String, inf
 }
 
 /// For save log as JSON
-fn save_json(website: &str, elements: Vec<(&str, &str, &str)>, success_color: &String) -> Result<()> {
-    let website_url = Url::parse(website).map_err(|error| 
-        anyhow!("{error}")
-    )?;
-    let website_name = website_url.host_str().ok_or_else(|| anyhow!(ErrorsType::UrlNotFound.as_str()))?;
+fn save_json(
+    website: &str,
+    elements: Vec<(&str, &str, &str)>,
+    success_color: &String,
+) -> Result<()> {
+    let website_url = Url::parse(website).map_err(|error| anyhow!("{error}"))?;
+    let website_name = website_url
+        .host_str()
+        .ok_or_else(|| anyhow!(ErrorsType::UrlNotFound.as_str()))?;
 
     let mut element_map: Map<String, Value> = Map::new();
     for (element_type, element_id, element_class) in elements {
-        let entry = element_map.entry(element_type.to_string()).or_insert_with(|| json!([]));
+        let entry = element_map
+            .entry(element_type.to_string())
+            .or_insert_with(|| json!([]));
 
         if let Value::Array(array) = entry {
             array.push(json!({
@@ -54,16 +71,13 @@ fn save_json(website: &str, elements: Vec<(&str, &str, &str)>, success_color: &S
         "Element": element_map
     });
 
-    let json_str= to_string_pretty(&json_raw_data).map_err(|error| {
-        anyhow!("{error}")
-    })?;
+    let json_str = to_string_pretty(&json_raw_data).map_err(|error| anyhow!("{error}"))?;
 
-    let mut log_file = File::create(format!("{website_name}.json")).map_err(|error| {
-        anyhow!("{error}")
-    })?;
-    log_file.write_all(json_str.as_bytes()).map_err(|error| {
-        anyhow!("{error}")
-    })?;
+    let mut log_file =
+        File::create(format!("{website_name}.json")).map_err(|error| anyhow!("{error}"))?;
+    log_file
+        .write_all(json_str.as_bytes())
+        .map_err(|error| anyhow!("{error}"))?;
 
     println!("{success_color} Saved log as {website_name}.json");
 
@@ -71,14 +85,7 @@ fn save_json(website: &str, elements: Vec<(&str, &str, &str)>, success_color: &S
 }
 
 /// Find HTML element of website and print this info, if exist.
-/// # Example
-/// ```rust
-/// let my_website = "https://example.com";
-/// let my_css_query = "div#example"; // div tag with example id
 ///
-/// element_count(my_website, my_css_query);
-///
-/// ```
 /// # Parameters:
 /// - `website` Website you want to check.
 /// - `element` Your CSS query. Use * to query all elements.
@@ -89,7 +96,12 @@ fn save_json(website: &str, elements: Vec<(&str, &str, &str)>, success_color: &S
 /// - `HTML_PARSE_FAILED` Parsing HTML is fails.
 /// - `ELEMENT_NOT_FOUND` Could not find any element.
 ///
-pub async fn find_element(website: &str, element: &str, debug_mode: bool, log_type: &str) -> Result<()> {
+pub async fn find_element(
+    website: &str,
+    element: &str,
+    debug_mode: bool,
+    log_type: &str,
+) -> Result<()> {
     let client = Client::new();
     let success_color = colors::LogLevel::Success.fmt();
     let process_bar = ProgressBar::new_spinner();
@@ -161,7 +173,7 @@ pub async fn find_element(website: &str, element: &str, debug_mode: bool, log_ty
         match log_type.to_lowercase().as_str() {
             "json" => save_json(website, element_vec, &success_color)?,
             "md" | "markdown" => println!("Markdown debug"),
-            _=> save_as_txt(website, element, &success_color, &info_color, &table)?,
+            _ => save_as_txt(website, element, &success_color, &info_color, &table)?,
         }
     } else {
         println!("{success_color} To enable debug mode, just type: kiew find -w {website} -e {element} --debug");
