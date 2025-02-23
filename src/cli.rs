@@ -13,6 +13,15 @@ pub enum OptionsScraping {
         ///- `web` `<WEBSITE_URL>`
         #[arg(short = 'w', long = "web")]
         website_url: String,
+
+        /// Argument: Debug
+        /// - Short argument
+        /// - `d` `<OPTION>` 
+        ///
+        /// - Long argument
+        /// - `debug` `<OPTIONS>`
+        #[arg(short = 'd', long = "debug", default_value = "none")]
+        debug: String,
     },
 }
 
