@@ -29,7 +29,10 @@ fn save_as_text(website_url: &str, log_stdout: &[Cow<str>]) -> Result<(), anyhow
 
     writeln!(log_file, "{}", log_stdout.join("\n")).context("Failed to write log file")?;
 
-    println!("{} Successfully save log with name {host_name}.txt", Success.fmt());
+    println!(
+        "{} Successfully save log with name {host_name}.txt",
+        Success.fmt()
+    );
     Ok(())
 }
 
@@ -52,32 +55,32 @@ fn split_url(web_url: &str) -> Cow<str> {
 
 /// Small helper function
 /// for otpion scraper with out debug.
-/// 
+///
 /// This looks like:
-/// 
+///
 /// ```bash
-/// kiew crawl href --web https://google.com 
+/// kiew crawl href --web https://google.com
 /// ```
-/// 
+///
 /// OR:
 /// ```bash
 /// kiew crawl href --web https://google.com --debug
 /// ```
 fn scraper_without_debug(mut table: Table, element: Vec<ElementRef<'_>>) {
-        let mut index: i32 = 0;
-        for href in element {
-            let element_type = href.value().name();
+    let mut index: i32 = 0;
+    for href in element {
+        let element_type = href.value().name();
 
-            if let Some(href_url) = href.value().attr("href") {
-                index = index.saturating_add(1);
-                table.add_row(Row::new(vec![
-                    Cell::new(&index.to_string()),
-                    Cell::new(element_type),
-                    Cell::new(&split_url(href_url)),
-                ]));
-            };
-        }
-        table.printstd();
+        if let Some(href_url) = href.value().attr("href") {
+            index = index.saturating_add(1);
+            table.add_row(Row::new(vec![
+                Cell::new(&index.to_string()),
+                Cell::new(element_type),
+                Cell::new(&split_url(href_url)),
+            ]));
+        };
+    }
+    table.printstd();
 }
 
 /// Crawl all href elments in website
@@ -123,28 +126,30 @@ pub async fn href_scraper(website_url: &str, debug: &str) -> Result<(), anyhow::
             scraper_without_debug(table, href_element);
             let end_time = start_time.elapsed();
             println!("{} Finished in: {end_time:.2?}\n{} Use kiew crawl href --web {website_url} --debug to enable debug mode",  Success.fmt(), Info.fmt());
-        },
+        }
         "txt" => {
             let mut logs: Vec<Cow<str>> = Vec::new();
-            
+
             let mut number: i32 = 0;
             for href in href_element {
                 let element = href.value().name();
-                
+
                 if let Some(href_url) = href.value().attr("href") {
                     number = number.saturating_add(1);
-                    logs.push(Cow::Owned(format!("Number: {number}\nType: {element}\nURL: {href_url}\n")));
+                    logs.push(Cow::Owned(format!(
+                        "Number: {number}\nType: {element}\nURL: {href_url}\n"
+                    )));
                 }
             }
 
             if !logs.is_empty() {
                 save_as_text(website_url, &logs)?;
             }
-            
+
             let end_time = start_time.elapsed();
             println!("{} Finished in: {end_time:.2?}", Success.fmt());
         }
-        _=> {
+        _ => {
             return Err(anyhow!("File format {debug} are not supported"));
         }
     }
