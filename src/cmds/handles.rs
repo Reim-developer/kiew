@@ -14,22 +14,21 @@ pub async fn handles_commands() {
     match args.commands {
         Commands::Match { website, element } => match element_count(&website, &element).await {
             Ok(()) => {}
-            Err(error) => eprintln!("{error_color} Fatal error with status: {error}"),
+            Err(error) => eprintln!("{error_color} Fatal: {error}"),
         },
 
         Commands::Find {
             website,
             element,
             debug_mode,
-            log_type,
-        } => match find_element(&website, &element, debug_mode, &log_type).await {
+        } => match find_element(&website, &element, &debug_mode).await {
             Ok(()) => {}
-            Err(error) => eprintln!("{error_color} Fatal error with status: {error}"),
+            Err(error) => eprintln!("{error_color} Fatal: {error}"),
         },
 
         Commands::Crawl { options } => match options {
             Href { website_url, debug } => {
-                if let Err(error) = href_scraper(&website_url,&debug).await {
+                if let Err(error) = href_scraper(&website_url, &debug).await {
                     eprintln!("{error_color} Fatal: {error}");
                 }
             }
