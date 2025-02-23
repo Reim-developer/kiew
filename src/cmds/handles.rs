@@ -28,8 +28,8 @@ pub async fn handles_commands() {
         },
 
         Commands::Crawl { options } => match options {
-            Href { website_url } => {
-                if let Err(error) = href_scraper(&website_url).await {
+            Href { website_url, debug } => {
+                if let Err(error) = href_scraper(&website_url,&debug).await {
                     eprintln!("{error_color} Fatal: {error}");
                 }
             }
