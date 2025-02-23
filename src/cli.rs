@@ -16,7 +16,7 @@ pub enum OptionsScraping {
 
         /// Argument: Debug
         /// - Short argument
-        /// - `d` `<OPTION>` 
+        /// - `d` `<OPTION>`
         ///
         /// - Long argument
         /// - `debug` `<OPTIONS>`
@@ -59,13 +59,8 @@ pub enum Commands {
         element: String,
 
         /// Is debug mode enabled?
-        #[arg(short = 'd', long = "debug", default_value = "false")]
-        debug_mode: bool,
-
-        /// For custom log type. such as JSON, Markdown, HTML.
-        /// Default as text (*.txt) file
-        #[arg(short = 'l', long = "logtype", default_value = "txt")]
-        log_type: String,
+        #[arg(short = 'd', long = "debug", default_value = "txt")]
+        debug_mode: String,
     },
 
     /// Scrper website with customize option
