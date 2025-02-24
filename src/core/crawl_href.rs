@@ -1,6 +1,8 @@
 use crate::colors::LogLevel::{Info, Success};
 use crate::errors::ErrorsType::ElementNotFound;
+use crate::log_stdout;
 use anyhow::{anyhow, Context, Result};
+use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{format::consts::FORMAT_BOX_CHARS, Cell, Row, Table};
 use reqwest::Url;
 use reqwest::{header::USER_AGENT, Client};
@@ -21,18 +23,14 @@ use std::time::{Duration, Instant};
 /// # Return
 /// - `Ok` if not error
 fn save_as_text(website_url: &str, log_stdout: &[Cow<str>]) -> Result<(), anyhow::Error> {
-    let web = Url::parse(website_url).context("Failed parse URL")?;
-    let host_name = web.host_str().context("Failed to get host name")?;
+    let web = Url::parse(website_url)?;
+    let host_name = web.host_str().context("Could not get hostname")?;
 
-    let mut log_file =
-        File::create(format!("{host_name}.txt")).context("Failed to write log file")?;
+    let mut log_file = File::create(format!("{host_name}.txt"))?;
 
-    writeln!(log_file, "{}", log_stdout.join("\n")).context("Failed to write log file")?;
+    writeln!(log_file, "{}", log_stdout.join("\n"))?;
 
-    println!(
-        "{} Successfully save log with name {host_name}.txt",
-        Success.fmt()
-    );
+    log_stdout!("{} Log saved as: {host_name}.txt", Info.fmt());
     Ok(())
 }
 
@@ -61,11 +59,6 @@ fn split_url(web_url: &str) -> Cow<str> {
 /// ```bash
 /// kiew crawl href --web https://google.com
 /// ```
-///
-/// OR:
-/// ```bash
-/// kiew crawl href --web https://google.com --debug
-/// ```
 fn scraper_without_debug(mut table: Table, element: Vec<ElementRef<'_>>) {
     let mut index: i32 = 0;
     for href in element {
@@ -92,8 +85,8 @@ fn scraper_without_debug(mut table: Table, element: Vec<ElementRef<'_>>) {
 ///
 pub async fn href_scraper(website_url: &str, debug: &str) -> Result<(), anyhow::Error> {
     let client = Client::builder().timeout(Duration::from_secs(15)).build()?;
-
     let start_time = Instant::now();
+    let progress_bar = ProgressBar::new_spinner();
 
     let response_body = client.get(website_url)
     .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
@@ -109,6 +102,16 @@ pub async fn href_scraper(website_url: &str, debug: &str) -> Result<(), anyhow::
 
     let href_element: Vec<_> = web_source.select(&css_query).collect();
 
+    if let Err(error) = ProgressStyle::default_spinner()
+        .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
+        .template("{spinner} {msg}")
+    {
+        return Err(anyhow!("{error}"));
+    }
+
+    progress_bar.set_message("Processing...");
+    progress_bar.enable_steady_tick(Duration::from_millis(100));
+
     if href_element.is_empty() {
         return Err(anyhow!("{}", ElementNotFound.as_str()));
     }
@@ -122,10 +125,19 @@ pub async fn href_scraper(website_url: &str, debug: &str) -> Result<(), anyhow::
                 Cell::new("Element Type"),
                 Cell::new("Href URL"),
             ]));
+            progress_bar.suspend(|| {
+                scraper_without_debug(table, href_element);
+            });
 
-            scraper_without_debug(table, href_element);
             let end_time = start_time.elapsed();
-            println!("{} Finished in: {end_time:.2?}\n{} Use kiew crawl href --web {website_url} --debug to enable debug mode",  Success.fmt(), Info.fmt());
+
+            progress_bar.finish_and_clear();
+
+            log_stdout!("{} Finished in: {end_time:.2?}", Success.fmt());
+            log_stdout!(
+                "{} Use kiew crawl href --web {website_url} --debug to enable debug mode",
+                Info.fmt()
+            );
         }
         "txt" => {
             let mut logs: Vec<Cow<str>> = Vec::new();
@@ -142,12 +154,20 @@ pub async fn href_scraper(website_url: &str, debug: &str) -> Result<(), anyhow::
                 }
             }
 
-            if !logs.is_empty() {
-                save_as_text(website_url, &logs)?;
+            if logs.is_empty() {
+                return Err(anyhow!("Href not found"));
             }
 
+            progress_bar.suspend(|| {
+                if let Err(error) = save_as_text(website_url, &logs) {
+                    return Err(anyhow!("{error}"));
+                };
+                Ok(())
+            })?;
             let end_time = start_time.elapsed();
-            println!("{} Finished in: {end_time:.2?}", Success.fmt());
+            progress_bar.finish_and_clear();
+
+            log_stdout!("{} Finished in {end_time:.2?}", Success.fmt());
         }
         _ => {
             return Err(anyhow!("File format {debug} are not supported"));
