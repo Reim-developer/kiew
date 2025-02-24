@@ -59,11 +59,11 @@ pub enum Commands {
         element: String,
 
         /// Is debug mode enabled?
-        #[arg(short = 'd', long = "debug", default_value = "txt")]
-        debug_mode: String,
+        #[arg(long = "debug",  default_value = "none")]
+        debug_mode: String
     },
 
-    /// Scrper website with customize option
+    /// Scraper website with customize option
     #[command(name = "crawl")]
     Crawl {
         /// Option for scraper website
