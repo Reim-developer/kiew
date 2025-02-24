@@ -31,6 +31,17 @@ macro_rules! log_stdout {
     }};
 }
 
+/// For log stderr
+#[macro_export]
+macro_rules! fatal {
+    ($($arg:tt)*) => {{
+        use chrono::Local;
+        let time_now = Local::now().format("[%Y-%m-%d %H:%M:%S]");
+
+        eprintln!("{} {}", time_now, format!($($arg)*));
+    }};
+}
+
 ///  Test color display implement.
 #[test]
 fn fmt_color_test() {
