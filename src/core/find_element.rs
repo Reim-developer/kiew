@@ -4,7 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{colors::LogLevel::Success, errors::ErrorsType};
+use crate::{colors::LogLevel::Success, errors::ErrorsType, log_stdout, colors::LogLevel::Info};
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{format, Cell, Row, Table};
@@ -28,7 +28,7 @@ fn save_as_txt(website: &str, table: &Table) -> Result<(), anyhow::Error> {
         .print(&mut log_file)
         .map_err(|error| anyhow!("{error}"))?;
 
-    println!("{} Saved log as {website_name}.txt", Success.fmt());
+    log_stdout!("{} Saved log as {website_name}.txt", Success.fmt());
     Ok(())
 }
 
@@ -63,7 +63,7 @@ fn save_json(website: &str, elements: Vec<(&str, &str, &str)>) -> Result<(), any
         .write_all(json_str.as_bytes())
         .map_err(|error| anyhow!("{error}"))?;
 
-    println!("{} Saved log as {website_name}.json", Success.fmt());
+    log_stdout!("{} Saved log as {website_name}.json", Success.fmt());
 
     Ok(())
 }
@@ -143,11 +143,12 @@ pub async fn find_element(
     let end_time = start_time.elapsed();
 
     process_bar.finish_and_clear();
-    println!("{} Finished in {end_time:.2?}", Success.fmt());
+    log_stdout!("{} Finished in {end_time:.2?}", Success.fmt());
 
     match debug_mode.to_lowercase().as_str() {
         "json" => save_json(website, element_vec)?,
         "txt" => save_as_txt(website, &table)?,
+        "none" => log_stdout!("{} Use kiew find -w {website} -e {element} --debug <Options> to run debug mode.",Info.fmt()),
         _ => return Err(anyhow!("Invalid debug option: {debug_mode}")),
     }
 
