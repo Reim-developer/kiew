@@ -20,11 +20,24 @@ impl LogLevel {
         }
     }
 }
+/// For log stdout
+#[macro_export]
+macro_rules! log_stdout {
+    ($($arg:tt)*) => {{
+        use chrono::Local;
+        let time_now = Local::now().format("[%Y-%m-%d %H:%M:%S]");
+
+        println!("{} {}", time_now, format!($($arg)*));
+    }};
+}
 
 ///  Test color display implement.
 #[test]
 fn fmt_color_test() {
+    use chrono::Local;
     use std::io::{self, Write};
+
+    let time_now = Local::now().format("[%Y-%m-%d %H:%M:%S]");
 
     let mut stdout = io::stdout();
 
@@ -35,4 +48,5 @@ fn fmt_color_test() {
     writeln!(stdout, "Error color: {error_color}").unwrap();
     writeln!(stdout, "Success color: {success_color}").unwrap();
     writeln!(stdout, "Info color {info_color}").unwrap();
+    writeln!(stdout, "Timestamp now: {time_now}").unwrap();
 }
