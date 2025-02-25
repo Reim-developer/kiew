@@ -3,7 +3,11 @@ use clap::Parser;
 use crate::{
     cli::{CommandLineInterface, Commands, OptionsScraping::Href},
     colors::LogLevel,
-    core::{crawl_href::href_scraper, element::element_count, find_element::find_element}, fatal,
+    core::{
+        crawl_href::href_scraper, element::element_count, find_element::find_element,
+        http::get::get_request,
+    },
+    fatal, log_stdout,
 };
 
 /// Handles all CLI commmands
@@ -16,7 +20,7 @@ pub async fn handles_commands() {
             Ok(()) => {}
             Err(error) => fatal!("{error_color} Fatal: {error}"),
         },
-        
+
         Commands::Find {
             website,
             element,
@@ -33,5 +37,16 @@ pub async fn handles_commands() {
                 }
             }
         },
+
+        Commands::Get {
+            website_url,
+            default_output,
+        } => {
+            if let Err(error) = get_request(&website_url).await {
+                fatal!("{error_color} Fatal: {error}");
+            }
+
+            log_stdout!("{} {}", website_url, default_output);
+        }
     }
 }
