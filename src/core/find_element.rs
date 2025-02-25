@@ -4,7 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{colors::LogLevel::Success, errors::ErrorsType, log_stdout, colors::LogLevel::Info};
+use crate::{colors::LogLevel::Info, colors::LogLevel::Success, errors::ErrorsType, log_stdout};
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{format, Cell, Row, Table};
@@ -148,7 +148,10 @@ pub async fn find_element(
     match debug_mode.to_lowercase().as_str() {
         "json" => save_json(website, element_vec)?,
         "txt" => save_as_txt(website, &table)?,
-        "none" => log_stdout!("{} Use kiew find -w {website} -e {element} --debug <Options> to run debug mode.",Info.fmt()),
+        "none" => log_stdout!(
+            "{} Use kiew find -w {website} -e {element} --debug <Options> to run debug mode.",
+            Info.fmt()
+        ),
         _ => return Err(anyhow!("Invalid debug option: {debug_mode}")),
     }
 
