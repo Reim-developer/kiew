@@ -59,8 +59,8 @@ pub enum Commands {
         element: String,
 
         /// Is debug mode enabled?
-        #[arg(long = "debug",  default_value = "none")]
-        debug_mode: String
+        #[arg(long = "debug", default_value = "none")]
+        debug_mode: String,
     },
 
     /// Scraper website with customize option
@@ -69,5 +69,17 @@ pub enum Commands {
         /// Option for scraper website
         #[command(subcommand)]
         options: OptionsScraping,
+    },
+
+    /// GET request command
+    #[command(name = "get")]
+    Get {
+        /// Website URL
+        #[arg(short = 'w', long = "web")]
+        website_url: String,
+
+        /// Output option
+        #[arg(short = 'o', long = "output", default_value = "html")]
+        default_output: String,
     },
 }
