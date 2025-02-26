@@ -7,7 +7,7 @@ use crate::{
         crawl_href::href_scraper, element::element_count, find_element::find_element,
         http::get::get_request,
     },
-    fatal, log_stdout,
+    fatal,
 };
 
 /// Handles all CLI commmands
@@ -40,13 +40,11 @@ pub async fn handles_commands() {
 
         Commands::Get {
             website_url,
-            default_output,
+            default_output: _,
         } => {
             if let Err(error) = get_request(&website_url).await {
                 fatal!("{error_color} Fatal: {error}");
             }
-
-            log_stdout!("{} {}", website_url, default_output);
         }
     }
 }
