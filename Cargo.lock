@@ -967,6 +967,8 @@ dependencies = [
  "chrono",
  "clap",
  "indicatif",
+ "lazy_static",
+ "mime",
  "owo-colors",
  "prettytable",
  "reqwest",
