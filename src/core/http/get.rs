@@ -42,7 +42,7 @@ fn format_json_output(json_source: &str) -> Result<(), anyhow::Error> {
     }
 
     Ok(())
-}
+} // fn format_json_output
 
 /// Handles HTTP GET request
 ///
@@ -62,9 +62,9 @@ pub async fn get_request(website_url: &str) -> Result<(), anyhow::Error> {
 
     match content_type.as_deref() {
         Some("application/json") => format_json_output(&response_body)?,
-        Some("s") => println!("zzz"),
+        Some("text/html") => log_stdout!("\n{response_body}"),
         _ => log_stdout!("\n{response_body}"),
     }
 
     Ok(())
-}
+} // fn get_request
