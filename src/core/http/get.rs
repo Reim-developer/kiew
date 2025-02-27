@@ -1,12 +1,15 @@
-use crate::{colors::LogLevel::Success, fatal};
 use crate::log_stdout;
+use crate::{colors::LogLevel::Success, fatal};
 use anyhow::{anyhow, Ok, Result};
 use lazy_static::lazy_static;
 use mime::Mime;
 use owo_colors::OwoColorize;
+use reqwest::header::{HeaderName, HeaderValue};
 use reqwest::{Client, Response};
 use std::{
-    collections::HashMap, io::{stdout, Write}, time::Instant
+    collections::HashMap,
+    io::{stdout, Write},
+    time::Instant,
 };
 use syntect::{
     easy::HighlightLines,
@@ -40,7 +43,6 @@ fn set_color_scheme_output(source_code: &str, language_type: &str) -> Result<(),
             .ok_or_else(|| anyhow!("Could not load highlight theme"))?,
     );
 
-    
     let mut buffer = Vec::new();
     let header_bar = format!(
         "────────────────── {} RESPONSE ──────────────────",
@@ -61,11 +63,13 @@ fn set_color_scheme_output(source_code: &str, language_type: &str) -> Result<(),
 
 /// Get content type with response
 fn get_content_type(response: &Response) -> Result<String, anyhow::Error> {
-    response.headers().get("content-type")
-    .and_then(|value| value.to_str().ok())
-    .and_then(|str| str.parse::<Mime>().ok()).map(|mime| {
-        mime.essence_str().to_string()
-    }).ok_or_else(|| anyhow!("Could not get Content-Type in {:?}", response.headers()))
+    response
+        .headers()
+        .get("content-type")
+        .and_then(|value| value.to_str().ok())
+        .and_then(|str| str.parse::<Mime>().ok())
+        .map(|mime| mime.essence_str().to_string())
+        .ok_or_else(|| anyhow!("Could not get Content-Type in {:?}", response.headers()))
 }
 
 /// Handles HTTP GET request
@@ -73,10 +77,26 @@ fn get_content_type(response: &Response) -> Result<String, anyhow::Error> {
 /// # Errors
 /// - `Request fails`
 /// - `Get response body fails`
-pub async fn get_request(website_url: &str) -> Result<(), anyhow::Error> {
+pub async fn get_request(
+    website_url: &str,
+    headers: &[(HeaderName, HeaderValue)],
+) -> Result<(), anyhow::Error> {
     let start_time = Instant::now();
 
-    let response = CLIENT.get(website_url).send().await?;
+    // let response = CLIENT
+    //     .get(website_url)
+    //     .header(USER_AGENT, options.0)
+    //     .header(ACCEPT, options.1)
+    //     .send()
+    //     .await?;
+
+    let mut request = CLIENT.get(website_url);
+    for (key, value) in headers {
+        request = request.header(key, value);
+    }
+
+    let response = request.send().await?;
+
     let content_type = get_content_type(&response)?;
     let response_body = response.text().await?;
 
@@ -86,7 +106,6 @@ pub async fn get_request(website_url: &str) -> Result<(), anyhow::Error> {
     content_types.insert("text/plain", "txt");
     content_types.insert("text/xml", "xml");
     content_types.insert("application/javascript", "js");
-
 
     if let Some(ext) = content_types.get(content_type.as_str()) {
         set_color_scheme_output(&response_body, ext)?;
