@@ -31,6 +31,11 @@ xml:
 
 # Error handling test
 err:
+
 	$(CARGO) get -w "https://nonexistweb.nonexistweb" -H "JustSimple: Error"
+	
+# Test in case debug mode is enable
+debug:
+	$(CARGO) get -w "https://httpbin.org/headers" -H "User-Agent: KiewCLI" -H "Accept: application/json" -H "Custom-Header: This is a test message!" --debug
 
 ###################################################### 
