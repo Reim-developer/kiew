@@ -1,11 +1,13 @@
 use crate::log_stdout;
-use crate::{colors::LogLevel::Success, fatal};
+use crate::{colors::LogLevel::Info, colors::LogLevel::Success, fatal};
 use anyhow::{anyhow, Ok, Result};
 use lazy_static::lazy_static;
 use mime::Mime;
 use owo_colors::OwoColorize;
 use reqwest::header::{HeaderName, HeaderValue};
 use reqwest::{Client, Response};
+use std::fs::File;
+use std::path::Path;
 use std::{
     collections::HashMap,
     io::{stdout, Write},
@@ -17,6 +19,7 @@ use syntect::{
     parsing::SyntaxSet,
     util::{as_24_bit_terminal_escaped, LinesWithEndings},
 };
+use url::Url;
 
 lazy_static! {
     /// Syntax Set
@@ -28,6 +31,33 @@ lazy_static! {
     /// Client
     static ref CLIENT: Client = Client::new();
 }
+
+/// Save log format
+fn save_as(website_url: &str, ext: &str, source: &str, debug: bool) -> Result<bool, anyhow::Error> {
+    if debug {
+        let url = Url::parse(website_url)?;
+        let web_domain = url
+            .host_str()
+            .ok_or_else(|| anyhow!("Could not get website domain"))?;
+        let mut default_file_name = format!("{web_domain}.{ext}");
+
+        let mut number: i32 = 0;
+        while Path::new(&default_file_name).exists() {
+            number = number.saturating_add(1);
+            default_file_name = format!("{web_domain}_{number}.{ext}");
+        }
+
+        let mut file = File::create(&default_file_name)?;
+        file.write_all(source.as_bytes())?;
+
+        log_stdout!("Successfully saved log as {}", default_file_name);
+
+        Ok(true)
+    } else {
+        log_stdout!("{} Use --debug option to enable debug mode", Info.fmt());
+        Ok(false)
+    }
+} // fm save_as
 
 /// For format XML output
 fn set_color_scheme_output(source_code: &str, language_type: &str) -> Result<(), anyhow::Error> {
@@ -80,15 +110,9 @@ fn get_content_type(response: &Response) -> Result<String, anyhow::Error> {
 pub async fn get_request(
     website_url: &str,
     headers: &[(HeaderName, HeaderValue)],
+    debug_enable: bool,
 ) -> Result<(), anyhow::Error> {
     let start_time = Instant::now();
-
-    // let response = CLIENT
-    //     .get(website_url)
-    //     .header(USER_AGENT, options.0)
-    //     .header(ACCEPT, options.1)
-    //     .send()
-    //     .await?;
 
     let mut request = CLIENT.get(website_url);
     for (key, value) in headers {
@@ -109,6 +133,7 @@ pub async fn get_request(
 
     if let Some(ext) = content_types.get(content_type.as_str()) {
         set_color_scheme_output(&response_body, ext)?;
+        save_as(website_url, ext, &response_body, debug_enable)?;
     } else {
         fatal!("Unsupported Content-Type: {}", content_type);
         log_stdout!("\n{}", response_body);
