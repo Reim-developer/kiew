@@ -85,9 +85,9 @@ pub enum Commands {
         #[arg(short = 'H', value_parser = parse_header)]
         headers: Vec<(HeaderName, HeaderValue)>,
 
-        /// Output option
-        #[arg(short = 'o', long = "output", default_value = "html")]
-        default_output: String,
+        /// Debug option
+        #[arg(short = 'd', long = "debug", default_value = "false")]
+        debug_option: bool,
     },
 }
 
