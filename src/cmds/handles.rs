@@ -40,10 +40,10 @@ pub async fn handles_commands() {
 
         Commands::Get {
             website_url,
-            default_output: _,
+            debug_option,
             headers,
         } => {
-            if let Err(error) = get_request(&website_url, &headers).await {
+            if let Err(error) = get_request(&website_url, &headers, debug_option).await {
                 fatal!("{error_color} Fatal: {error}");
             }
         }
