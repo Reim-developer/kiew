@@ -1,4 +1,7 @@
+use anyhow::anyhow;
 use clap::{Parser, Subcommand};
+use reqwest::header::{HeaderName, HeaderValue};
+use std::str::FromStr;
 
 /// Options for scraping website
 #[derive(Subcommand)]
@@ -78,8 +81,27 @@ pub enum Commands {
         #[arg(short = 'w', long = "web")]
         website_url: String,
 
+        /// Custom headers for request
+        #[arg(short = 'H', value_parser = parse_header)]
+        headers: Vec<(HeaderName, HeaderValue)>,
+
         /// Output option
         #[arg(short = 'o', long = "output", default_value = "html")]
         default_output: String,
     },
+}
+
+/// Parser header
+fn parse_header(s: &str) -> Result<(HeaderName, HeaderValue), anyhow::Error> {
+    let parts: Vec<&str> = s.splitn(2, ": ").collect();
+    let key_str = parts
+        .first()
+        .ok_or_else(|| anyhow!("Missing header KEY in {}", s))?;
+    let value_str = parts
+        .get(1)
+        .ok_or_else(|| anyhow!("Missing header VALUE in {}", s))?;
+
+    let key = HeaderName::from_str(key_str)?;
+    let value = HeaderValue::from_str(value_str)?;
+    Ok((key, value))
 }
