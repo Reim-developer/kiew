@@ -14,32 +14,11 @@ impl LogLevel {
     /// Return color and log level as String
     pub fn fmt(&self) -> String {
         match self {
-            Self::Success => "[SUCCESS]".bright_white().on_bright_green().to_string(),
-            Self::Info => "[INFO]".bright_white().on_cyan().to_string(),
-            Self::Error => "[ERR]".bright_white().on_bright_red().to_string(),
+            Self::Success => "[SUCCESS]".green().bold().to_string(),
+            Self::Info => "[INFO]".cyan().bold().to_string(),
+            Self::Error => "[ERR]".red().bold().to_string(),
         }
     }
-}
-/// For log stdout
-#[macro_export]
-macro_rules! log_stdout {
-    ($($arg:tt)*) => {{
-        use chrono::Local;
-        let time_now = Local::now().format("[%Y-%m-%d %H:%M:%S]");
-
-        println!("{} {}", time_now, format!($($arg)*));
-    }};
-}
-
-/// For log stderr
-#[macro_export]
-macro_rules! fatal {
-    ($($arg:tt)*) => {{
-        use chrono::Local;
-        let time_now = Local::now().format("[%Y-%m-%d %H:%M:%S]");
-
-        eprintln!("{} {}", time_now, format!($($arg)*));
-    }};
 }
 
 ///  Test color display implement.
