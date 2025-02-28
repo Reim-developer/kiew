@@ -109,6 +109,7 @@ fn get_content_type(response: &Response) -> Result<String, anyhow::Error> {
 /// # Errors
 /// - `Request fails`
 /// - `Get response body fails`
+#[inline]
 pub async fn get_request(
     website_url: &str,
     headers: &[(HeaderName, HeaderValue)],
