@@ -81,6 +81,7 @@ fn save_json(website: &str, elements: Vec<(&str, &str, &str)>) -> Result<(), any
 /// - `HTML_PARSE_FAILED` Parsing HTML is fails.
 /// - `ELEMENT_NOT_FOUND` Could not find any element.
 ///
+#[inline]
 pub async fn find_element(
     website: &str,
     element: &str,
