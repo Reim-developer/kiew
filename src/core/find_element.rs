@@ -24,11 +24,12 @@ fn save_as_txt(website: &str, table: &Table) -> Result<(), anyhow::Error> {
     let mut log_file =
         File::create(format!("{website_name}.txt")).map_err(|error| anyhow!("{error}"))?;
 
-    table
-        .print(&mut log_file)
-        .map_err(|error| anyhow!("{error}"))?;
+    let bytes = table.print(&mut log_file)?;
 
-    log_stdout!("{} Saved log as {website_name}.txt", Success.fmt());
+    log_stdout!(
+        "{} Saved log as {website_name}.txt ({bytes} bytes)",
+        Success.fmt()
+    );
     Ok(())
 }
 
@@ -40,7 +41,7 @@ fn save_json(website: &str, elements: Vec<(&str, &str, &str)>) -> Result<(), any
     let mut element_map: Map<String, Value> = Map::new();
     for (element_type, element_id, element_class) in elements {
         let entry = element_map
-            .entry(element_type.to_string())
+            .entry(element_type.to_owned())
             .or_insert_with(|| json!([]));
 
         if let Value::Array(array) = entry {
@@ -92,7 +93,7 @@ pub async fn find_element(
 
     let start_time = Instant::now();
     table.set_format(*format::consts::FORMAT_BOX_CHARS);
-    table.add_row(Row::new(vec![
+    _ = table.add_row(Row::new(vec![
         Cell::new("Element Type"),
         Cell::new("Element ID"),
         Cell::new("Element Class"),
@@ -128,7 +129,7 @@ pub async fn find_element(
         let element_class = webpage_element.value().attr("class").unwrap_or("No class");
         let element_id = webpage_element.value().attr("id").unwrap_or("No id");
 
-        table.add_row(Row::new(vec![
+        _ = table.add_row(Row::new(vec![
             Cell::new(element_type),
             Cell::new(element_id),
             Cell::new(element_class),
