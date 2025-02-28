@@ -1,6 +1,7 @@
 use crate::log_stdout;
 use crate::{colors::LogLevel::Info, colors::LogLevel::Success, fatal};
 use anyhow::{anyhow, Ok, Result};
+use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
 use mime::Mime;
 use owo_colors::OwoColorize;
@@ -8,6 +9,7 @@ use reqwest::header::{HeaderName, HeaderValue};
 use reqwest::{Client, Response};
 use std::fs::File;
 use std::path::Path;
+use std::time::Duration;
 use std::{
     collections::HashMap,
     io::{stdout, Write},
@@ -98,7 +100,7 @@ fn get_content_type(response: &Response) -> Result<String, anyhow::Error> {
         .get("content-type")
         .and_then(|value| value.to_str().ok())
         .and_then(|str| str.parse::<Mime>().ok())
-        .map(|mime| mime.essence_str().to_string())
+        .map(|mime| mime.essence_str().to_owned())
         .ok_or_else(|| anyhow!("Could not get Content-Type in {:?}", response.headers()))
 }
 
@@ -112,7 +114,18 @@ pub async fn get_request(
     headers: &[(HeaderName, HeaderValue)],
     debug_enable: bool,
 ) -> Result<(), anyhow::Error> {
+    let progress = ProgressBar::new_spinner();
     let start_time = Instant::now();
+
+    if let Err(error) = ProgressStyle::default_spinner()
+        .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
+        .template("{spinner} {msg}")
+    {
+        return Err(anyhow!("{error}"));
+    }
+
+    progress.set_message("Processing...");
+    progress.enable_steady_tick(Duration::from_millis(100));
 
     let mut request = CLIENT.get(website_url);
     for (key, value) in headers {
@@ -125,15 +138,23 @@ pub async fn get_request(
     let response_body = response.text().await?;
 
     let mut content_types: HashMap<&str, &str> = HashMap::new();
-    content_types.insert("application/json", "json");
-    content_types.insert("text/html", "html");
-    content_types.insert("text/plain", "txt");
-    content_types.insert("text/xml", "xml");
-    content_types.insert("application/javascript", "js");
+    _ = content_types.insert("application/json", "json");
+    _ = content_types.insert("text/html", "html");
+    _ = content_types.insert("text/plain", "txt");
+    _ = content_types.insert("text/xml", "xml");
+    _ = content_types.insert("application/javascript", "js");
 
     if let Some(ext) = content_types.get(content_type.as_str()) {
-        set_color_scheme_output(&response_body, ext)?;
-        save_as(website_url, ext, &response_body, debug_enable)?;
+        progress.suspend(|| {
+            if let Err(error) = set_color_scheme_output(&response_body, ext) {
+                return Err(anyhow!("{error}"));
+            };
+            if let Err(error) = save_as(website_url, ext, &response_body, debug_enable) {
+                return Err(anyhow!("{error}"));
+            };
+            Ok(())
+        })?;
+        progress.finish_and_clear();
     } else {
         fatal!("Unsupported Content-Type: {}", content_type);
         log_stdout!("\n{}", response_body);
