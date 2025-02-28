@@ -39,3 +39,9 @@ debug:
 	$(CARGO) get -w "https://httpbin.org/headers" -H "User-Agent: KiewCLI" -H "Accept: application/json" -H "Custom-Header: This is a test message!" --debug
 
 ###################################################### 
+
+# FOR TEST:
+test:
+	cargo test
+
+####################
