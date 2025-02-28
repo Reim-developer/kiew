@@ -83,6 +83,7 @@ fn scraper_without_debug(mut table: Table, element: Vec<ElementRef<'_>>) {
 /// # Errors
 /// `REQUEST_FAILED` Get response/Request is fails
 ///
+#[inline]
 pub async fn href_scraper(website_url: &str, debug: &str) -> Result<(), anyhow::Error> {
     let client = Client::builder().timeout(Duration::from_secs(15)).build()?;
     let start_time = Instant::now();
