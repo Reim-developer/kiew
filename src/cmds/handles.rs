@@ -11,6 +11,7 @@ use crate::{
 };
 
 /// Handles all CLI commmands
+#[inline]
 pub async fn handles_commands() {
     let args = CommandLineInterface::parse();
     let error_color = LogLevel::Error.fmt();
