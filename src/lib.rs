@@ -141,6 +141,9 @@ pub mod core {
     /// Scraper all href URL in website
     pub mod crawl_href;
 
+    /// Logging system
+    pub mod log;
+
     /// For http request/api testing
     pub mod http {
         /// GET request
