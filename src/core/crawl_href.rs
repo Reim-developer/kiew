@@ -66,7 +66,7 @@ fn scraper_without_debug(mut table: Table, element: Vec<ElementRef<'_>>) {
 
         if let Some(href_url) = href.value().attr("href") {
             index = index.saturating_add(1);
-            table.add_row(Row::new(vec![
+            _ = table.add_row(Row::new(vec![
                 Cell::new(&index.to_string()),
                 Cell::new(element_type),
                 Cell::new(&split_url(href_url)),
@@ -120,7 +120,7 @@ pub async fn href_scraper(website_url: &str, debug: &str) -> Result<(), anyhow::
         "none" => {
             let mut table = Table::new();
             table.set_format(*FORMAT_BOX_CHARS);
-            table.add_row(Row::new(vec![
+            _ = table.add_row(Row::new(vec![
                 Cell::new("Number"),
                 Cell::new("Element Type"),
                 Cell::new("Href URL"),
