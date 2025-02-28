@@ -6,7 +6,7 @@ use prettytable::{format::consts::FORMAT_BOX_CHARS, Cell, Row, Table};
 use reqwest::{header::USER_AGENT, Client};
 use scraper::Html;
 
-use crate::{colors::LogLevel, errors::ErrorsType};
+use crate::{colors::LogLevel, errors::ErrorsType, log_stdout};
 
 /// Counter the number of elements matching a CSS query on a given website.
 ///
@@ -20,6 +20,7 @@ use crate::{colors::LogLevel, errors::ErrorsType};
 /// - `HTML_PARSE_FAILED` Parsing HTML is fails.
 /// - `ELEMENT_NOT_FOUND` Could not find any element.
 ///
+#[inline]
 pub async fn element_count(website: &str, element: &str) -> Result<()> {
     let client = Client::new();
     let success_color = LogLevel::Success.fmt();
@@ -74,7 +75,7 @@ pub async fn element_count(website: &str, element: &str) -> Result<()> {
     ]));
     table.printstd();
 
-    println!("{success_color} Finished in {end_time:.2?}");
+    log_stdout!("{success_color} Finished in {end_time:.2?}");
     println!(
         "{info_color} To find any specify element infomation, just use: kiew find -w {website} -e {element}"
     );
