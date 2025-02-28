@@ -29,7 +29,7 @@ pub async fn element_count(website: &str, element: &str) -> Result<()> {
 
     let mut table = Table::new();
     table.set_format(*FORMAT_BOX_CHARS);
-    table.add_row(Row::new(vec![
+    _ = table.add_row(Row::new(vec![
         Cell::new("Element Type"),
         Cell::new("Element(s) Count"),
     ]));
@@ -68,7 +68,7 @@ pub async fn element_count(website: &str, element: &str) -> Result<()> {
     let end_time = start_time.elapsed();
     process_bar.finish_and_clear();
 
-    table.add_row(Row::new(vec![
+    _ = table.add_row(Row::new(vec![
         Cell::new(element),
         Cell::new(format!("{element_count}").as_str()),
     ]));
