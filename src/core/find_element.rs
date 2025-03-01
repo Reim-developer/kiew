@@ -60,11 +60,12 @@ fn save_json(website: &str, elements: Vec<(&str, &str, &str)>) -> Result<(), any
 
     let mut log_file =
         File::create(format!("{website_name}.json")).map_err(|error| anyhow!("{error}"))?;
-    log_file
-        .write_all(json_str.as_bytes())
-        .map_err(|error| anyhow!("{error}"))?;
+    let bytes = log_file.write(json_str.as_bytes())?;
 
-    log_stdout!("{} Saved log as {website_name}.json", Success.fmt());
+    log_stdout!(
+        "{} Saved log as {website_name}.json ({bytes} bytes written)",
+        Success.fmt()
+    );
 
     Ok(())
 }
