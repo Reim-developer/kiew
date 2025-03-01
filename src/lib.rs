@@ -447,6 +447,9 @@ pub mod core {
     pub mod http {
         /// GET request
         pub mod get;
+
+        /// POST request
+        pub mod post;
     }
 }
 
