@@ -50,9 +50,13 @@ fn save_as(website_url: &str, ext: &str, source: &str, debug: bool) -> Result<bo
         }
 
         let mut file = File::create(&default_file_name)?;
-        file.write_all(source.as_bytes())?;
+        let bytes = file.write(source.as_bytes())?;
 
-        log_stdout!("Successfully saved log as {}", default_file_name);
+        log_stdout!(
+            "{} Successfully saved log as {} ({bytes} bytes written)",
+            Info.fmt(),
+            default_file_name
+        );
 
         Ok(true)
     } else {
