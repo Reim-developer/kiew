@@ -462,6 +462,12 @@ pub mod cmds {
     pub mod handles;
 }
 
+/// Enum helper
+pub mod ultis {
+    /// For content type, such as "application/json", "text/html", etc...
+    pub mod content_type;
+}
+
 /// Define Colors/LogLevel
 mod colors;
 /// Define all error types
