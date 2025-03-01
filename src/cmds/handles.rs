@@ -4,8 +4,10 @@ use crate::{
     cli::{CommandLineInterface, Commands, OptionsScraping::Href},
     colors::LogLevel,
     core::{
-        crawl_href::href_scraper, element::element_count, find_element::find_element,
-        http::get::get_request,
+        crawl_href::href_scraper,
+        element::element_count,
+        find_element::find_element,
+        http::{get::get_request, post::post_request},
     },
     fatal,
 };
@@ -21,7 +23,6 @@ pub async fn handles_commands() {
             Ok(()) => {}
             Err(error) => fatal!("{error_color} Fatal: {error}"),
         },
-
         Commands::Find {
             website,
             element,
@@ -30,7 +31,6 @@ pub async fn handles_commands() {
             Ok(()) => {}
             Err(error) => fatal!("{error_color} Fatal: {error}"),
         },
-
         Commands::Crawl { options } => match options {
             Href { website_url, debug } => {
                 if let Err(error) = href_scraper(&website_url, &debug).await {
@@ -38,13 +38,22 @@ pub async fn handles_commands() {
                 }
             }
         },
-
         Commands::Get {
             website_url,
             debug_option,
             headers,
         } => {
             if let Err(error) = get_request(&website_url, &headers, debug_option).await {
+                fatal!("{error_color} Fatal: {error}");
+            }
+        }
+        Commands::Post {
+            website_url,
+            headers,
+            debug_option,
+            payload,
+        } => {
+            if let Err(error) = post_request(&website_url, &headers, &payload, debug_option).await {
                 fatal!("{error_color} Fatal: {error}");
             }
         }
