@@ -1,5 +1,6 @@
 use crate::log_stdout;
-use crate::{colors::LogLevel::Info, colors::LogLevel::Success, fatal};
+use crate::ultis::content_type::ContentType;
+use crate::{colors::LogLevel::Error, colors::LogLevel::Info, colors::LogLevel::Success, fatal};
 use anyhow::{anyhow, Ok, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
@@ -11,7 +12,6 @@ use std::fs::File;
 use std::path::Path;
 use std::time::Duration;
 use std::{
-    collections::HashMap,
     io::{stdout, Write},
     time::Instant,
 };
@@ -98,14 +98,16 @@ fn set_color_scheme_output(source_code: &str, language_type: &str) -> Result<(),
 } // fn set_color_scheme_output
 
 /// Get content type with response
-fn get_content_type(response: &Response) -> Result<String, anyhow::Error> {
-    response
+fn get_content_type(response: &Response) -> Result<ContentType, anyhow::Error> {
+    let content_type = response
         .headers()
         .get("content-type")
         .and_then(|value| value.to_str().ok())
         .and_then(|str| str.parse::<Mime>().ok())
         .map(|mime| mime.essence_str().to_owned())
-        .ok_or_else(|| anyhow!("Could not get Content-Type in {:?}", response.headers()))
+        .ok_or_else(|| anyhow!("Could not get Content-Type in {:?}", response.headers()))?;
+
+    Ok(ContentType::get(&content_type))
 }
 
 /// Handles HTTP GET request
@@ -142,15 +144,13 @@ pub async fn get_request(
     let content_type = get_content_type(&response)?;
     let response_body = response.text().await?;
 
-    let mut content_types: HashMap<&str, &str> = HashMap::new();
-    _ = content_types.insert("application/json", "json");
-    _ = content_types.insert("text/html", "html");
-    _ = content_types.insert("text/plain", "txt");
-    _ = content_types.insert("text/xml", "xml");
-    _ = content_types.insert("application/javascript", "js");
-
-    if let Some(ext) = content_types.get(content_type.as_str()) {
+    if let ContentType::Other(ref unknown_type) = content_type {
+        progress.finish_and_clear();
+        fatal!("{} Unknown Content-Type: {}", Error.fmt(), unknown_type);
+        log_stdout!("\n{}", response_body);
+    } else {
         progress.suspend(|| {
+            let ext = content_type.get_extension();
             if let Err(error) = set_color_scheme_output(&response_body, ext) {
                 return Err(anyhow!("{error}"));
             };
@@ -160,9 +160,6 @@ pub async fn get_request(
             Ok(())
         })?;
         progress.finish_and_clear();
-    } else {
-        fatal!("Unsupported Content-Type: {}", content_type);
-        log_stdout!("\n{}", response_body);
     }
 
     let end_time = start_time.elapsed();
