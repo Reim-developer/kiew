@@ -7,7 +7,7 @@ use crate::{
         crawl_href::href_scraper,
         element::element_count,
         find_element::find_element,
-        http::{get::get_request, post::post_request},
+        http::{delete::delete_request, get::get_request, post::post_request, put::put_request},
     },
     fatal,
 };
@@ -55,6 +55,27 @@ pub async fn handles_commands() {
         } => {
             if let Err(error) = post_request(&website_url, &headers, &payload, debug_option).await {
                 fatal!("{error_color} Fatal: {error}");
+            }
+        }
+        Commands::Put {
+            website_url,
+            headers,
+            payload,
+            debug_option,
+        } => {
+            if let Err(error) = put_request(&website_url, &headers, &payload, debug_option).await {
+                fatal!("{error_color} Fatal: {error}");
+            }
+        }
+        Commands::Delete {
+            website_url,
+            headers,
+            payload,
+            debug_option,
+        } => {
+            if let Err(error) = delete_request(&website_url, &headers, &payload, debug_option).await
+            {
+                fatal!("{error_color} Fatel: {error}");
             }
         }
     }
