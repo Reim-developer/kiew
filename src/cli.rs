@@ -109,6 +109,46 @@ pub enum Commands {
         #[arg(short = 'd', long = "debug", default_value = "false")]
         debug_option: bool,
     },
+
+    /// PUT request command
+    #[command(name = "put")]
+    Put {
+        /// Website URL
+        #[arg(short = 'w', long = "web")]
+        website_url: String,
+
+        /// Custom headers for request
+        #[arg(short = 'H', value_parser = parse_header)]
+        headers: Vec<(HeaderName, HeaderValue)>,
+
+        /// Custom payload for PUT request
+        #[arg(short = 'P', default_value = "")]
+        payload: String,
+
+        /// Debug option
+        #[arg(short = 'd', long = "debug", default_value = "false")]
+        debug_option: bool,
+    },
+
+    /// PUT request command
+    #[command(name = "delete")]
+    Delete {
+        /// Website URL
+        #[arg(short = 'w', long = "web")]
+        website_url: String,
+
+        /// Custom headers for request
+        #[arg(short = 'H', value_parser = parse_header)]
+        headers: Vec<(HeaderName, HeaderValue)>,
+
+        /// Custom payload for DELETE request
+        #[arg(short = 'P', default_value = "")]
+        payload: String,
+
+        /// Debug option
+        #[arg(short = 'd', long = "debug", default_value = "false")]
+        debug_option: bool,
+    },
 }
 
 /// Parser header
