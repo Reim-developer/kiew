@@ -450,6 +450,12 @@ pub mod core {
 
         /// POST request
         pub mod post;
+
+        /// PUT request
+        pub mod put;
+
+        /// DELETE request
+        pub mod delete;
     }
 }
 
