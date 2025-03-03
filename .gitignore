@@ -4,3 +4,6 @@
 # Ignore all log test files
 *.txt
 *.json
+
+# Ignore test file
+unsplash.com
