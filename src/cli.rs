@@ -89,6 +89,14 @@ pub enum Commands {
         #[arg(short = 'd', long = "debug", default_value = "false")]
         debug_option: bool,
     },
+
+    /// Generater setting of your request.
+    #[command(name = "setting")]
+    Setting {
+        /// Your file name. Default is system timestamp.
+        #[arg(short = 'F', long = "name", default_value = "")]
+        file_name: String,
+    },
 }
 
 /// Parser header
