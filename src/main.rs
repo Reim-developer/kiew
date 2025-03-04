@@ -20,11 +20,13 @@
 //! OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //! SOFTWARE.
 //!
-use kiew::cmds::handles::handles_commands;
+use kiew::{cmds::handles::handles_commands, fatal};
 
 #[doc = "Kiew is a Command Line Interface, for scraping website"]
 #[tokio::main]
 
 async fn main() {
-    handles_commands().await;
+    if let Err(error) = handles_commands().await {
+        fatal!("{error}")
+    }
 }
