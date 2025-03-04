@@ -462,6 +462,9 @@ pub mod cmds {
 pub mod ultis {
     /// For content type, such as "application/json", "text/html", etc...
     pub mod content_type;
+
+    /// For generate setting
+    pub mod setting;
 }
 
 /// Define Colors/LogLevel
