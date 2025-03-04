@@ -1,17 +1,22 @@
 use clap::Parser;
 
 use crate::{
-    cli::CommandLineInterface, cli::Commands,
-    colors::LogLevel,
+    cli::{CommandLineInterface, Commands},
     core::http::{delete::delete_request, get::get_request, post::post_request, put::put_request},
-    fatal,
+    ultis::setting::generate_setting,
 };
 
 /// Handles all CLI commmands
+///
+/// # Errors
+/// Request
+/// - `GET` fails
+/// - `POST` fails
+/// - `DELETE` fails
+/// - `PUT` fails
 #[inline]
-pub async fn handles_commands() {
+pub async fn handles_commands() -> Result<(), anyhow::Error> {
     let args = CommandLineInterface::parse();
-    let error_color = LogLevel::Error.fmt();
 
     match args.commands {
         Commands::Get {
@@ -19,9 +24,7 @@ pub async fn handles_commands() {
             debug_option,
             headers,
         } => {
-            if let Err(error) = get_request(&website_url, &headers, debug_option).await {
-                fatal!("{error_color} Fatal: {error}");
-            }
+            get_request(&website_url, &headers, debug_option).await?;
         }
         Commands::Post {
             website_url,
@@ -29,9 +32,7 @@ pub async fn handles_commands() {
             debug_option,
             payload,
         } => {
-            if let Err(error) = post_request(&website_url, &headers, &payload, debug_option).await {
-                fatal!("{error_color} Fatal: {error}");
-            }
+            post_request(&website_url, &headers, &payload, debug_option).await?;
         }
         Commands::Put {
             website_url,
@@ -39,9 +40,7 @@ pub async fn handles_commands() {
             payload,
             debug_option,
         } => {
-            if let Err(error) = put_request(&website_url, &headers, &payload, debug_option).await {
-                fatal!("{error_color} Fatal: {error}");
-            }
+            put_request(&website_url, &headers, &payload, debug_option).await?;
         }
         Commands::Delete {
             website_url,
@@ -49,10 +48,12 @@ pub async fn handles_commands() {
             payload,
             debug_option,
         } => {
-            if let Err(error) = delete_request(&website_url, &headers, &payload, debug_option).await
-            {
-                fatal!("{error_color} Fatel: {error}");
-            }
+            delete_request(&website_url, &headers, &payload, debug_option).await?;
+        }
+        Commands::Setting { file_name } => {
+            generate_setting(&file_name)?;
         }
     }
+
+    Ok(())
 }
