@@ -466,5 +466,3 @@ pub mod ultis {
 
 /// Define Colors/LogLevel
 mod colors;
-/// Define all error types
-mod errors;
