@@ -46,7 +46,7 @@ get_debug:
 
 # FOR TEST:
 test:
-	cargo test
+	@cargo test
 
 ####################
 
@@ -105,3 +105,11 @@ delete_long:
 # PUT request with long body and enable debug mode
 delete_debug:
 	$(CARGO) delete -w $(HTTPBIN_DEL) -H "User-Agent: KiewCLI" -H "Accept: application/json" -P '{"user":{"id":12345,"name":"Nguyen Van A","email":"nguyenvana@example.com","age":30},"order":{"order_id":"ABC123XYZ","items":[{"product":"Laptop Dell XPS 13","price":1500.99,"quantity":1},{"product":"Mouse Logitech MX Master","price":99.50,"quantity":2}],"total":1699.99,"status":"pending"},"timestamp":"2025-03-01T12:34:56Z","metadata":{"source":"web","campaign":"spring_sale_2025"}}' --debug
+
+# Setting default
+setting_default:
+	$(CARGO) setting
+
+# Setting with customize setting file name
+setting_custom:
+	$(CARGO) setting -F "MyCustomSetting"
