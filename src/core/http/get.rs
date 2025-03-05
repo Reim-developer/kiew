@@ -2,6 +2,7 @@ use crate::log_stdout;
 use crate::ultis::content_type::ContentType;
 use crate::{colors::LogLevel::Error, colors::LogLevel::Info, colors::LogLevel::Success, fatal};
 use anyhow::{anyhow, Ok, Result};
+use chrono::Local;
 use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
 use mime::Mime;
@@ -9,10 +10,11 @@ use owo_colors::OwoColorize;
 use reqwest::header::{HeaderName, HeaderValue};
 use reqwest::{Client, Response};
 use std::fs::File;
+use std::io::Stdout;
 use std::path::Path;
 use std::time::Duration;
 use std::{
-    io::{stdout, Write},
+    io::{self, Write},
     time::Instant,
 };
 use syntect::{
@@ -32,6 +34,9 @@ lazy_static! {
 
     /// Client
     static ref CLIENT: Client = Client::new();
+
+    /// Stdout
+    static ref stdout: Stdout = io::stdout();
 }
 
 /// Save log format
@@ -92,7 +97,7 @@ fn set_color_scheme_output(source_code: &str, language_type: &str) -> Result<(),
 
         writeln!(buffer, "{escaped}")?;
     }
-    stdout().lock().write_all(&buffer)?;
+    stdout.lock().write_all(&buffer)?;
 
     Ok(())
 } // fn set_color_scheme_output
@@ -116,7 +121,7 @@ fn get_content_type(response: &Response) -> Result<ContentType, anyhow::Error> {
 /// - `Request fails`
 /// - `Get response body fails`
 #[inline]
-pub async fn get_request(
+async fn get_request(
     website_url: &str,
     headers: &[(HeaderName, HeaderValue)],
     debug_enable: bool,
@@ -167,3 +172,104 @@ pub async fn get_request(
 
     Ok(())
 } // fn get_request
+
+/// Get details response of website
+/// instead of response body
+async fn get_response_details(website_url: &str, debug: bool) -> Result<(), anyhow::Error> {
+    let start_time = Instant::now();
+    let response = CLIENT.get(website_url).send().await?;
+    let content_type = response
+        .headers()
+        .get("Content-Type")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or("Unknown Content Type");
+
+    let content_length = response
+        .content_length()
+        .map_or("Unknown content length".to_owned(), |ct| ct.to_string());
+    let status_code = response.status();
+    let http_version = response.version();
+    let headers = response.headers();
+    let url_parse = Url::parse(website_url)?;
+    let host_name = url_parse.host_str().unwrap_or("Unknown hostname");
+
+    let time_now = Local::now().format("%Y-%m-%d %H:%M:%S");
+    let mut details = vec![format!(
+        "
+➤ Basic Information:
+\t Website {website_url}
+\t Hostname: {host_name}
+\t Status Code: {status_code}
+\t Content Type: {content_type}
+\t Content length: {content_length}
+\t HTTP Version: {http_version:?}
+\t Date: {time_now}
+        "
+    )];
+
+    let response_headers: Vec<String> = headers
+        .iter()
+        .map(|(key, value)| {
+            format!(
+                "\t {}: {}",
+                key.as_str().to_uppercase(),
+                value.to_str().unwrap_or("Unkown")
+            )
+        })
+        .collect();
+
+    details.push("➤ Headers:".to_owned());
+    details.push(response_headers.join("\n"));
+
+    if debug {
+        let mut file_name = format!("{host_name}.txt");
+
+        let mut number: i32 = 0;
+        while Path::new(&file_name).exists() {
+            number = number.saturating_add(1);
+            file_name = format!("{host_name}_{number}.txt");
+        }
+
+        let mut file = File::create(&file_name)?;
+        let bytes = file.write(details.join("\n").as_bytes())?;
+        
+        writeln!(&*stdout, "{}", details.join("\n"))?;
+        log_stdout!(
+            "{} Saved as {file_name} ({bytes} bytes), {:.2?}",
+            Success.fmt(),
+            start_time.elapsed()
+        );
+    } else {
+        writeln!(&*stdout, "{}", details.join("\n"))?;
+        log_stdout!(
+            "{} Finished in {:.2?}. Use --debug to enable debug mode",
+            Success.fmt(),
+            start_time.elapsed()
+        );
+    }
+
+    Ok(())
+}
+
+/// Handles CLI options:
+///
+/// # Errors
+/// - `get_request fn` fails
+#[inline]
+pub async fn match_options_get(
+    website_url: &str,
+    headers: &[(HeaderName, HeaderValue)],
+    debug_enable: bool,
+    details: bool,
+) -> Result<(), anyhow::Error> {
+    if details {
+        get_response_details(website_url, debug_enable).await?;
+    } else {
+        get_request(website_url, headers, debug_enable).await?;
+        log_stdout!(
+            "{} Use 'kiew -I -w {website_url}' to show request details instead of response body",
+            Info.fmt()
+        );
+    }
+    Ok(())
+}
