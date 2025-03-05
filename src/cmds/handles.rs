@@ -2,7 +2,9 @@ use clap::Parser;
 
 use crate::{
     cli::{CommandLineInterface, Commands},
-    core::http::{delete::delete_request, get::get_request, post::post_request, put::put_request},
+    core::http::{
+        delete::delete_request, get::match_options_get, post::post_request, put::put_request,
+    },
     ultis::setting::generate_setting,
 };
 
@@ -23,8 +25,9 @@ pub async fn handles_commands() -> Result<(), anyhow::Error> {
             website_url,
             debug_option,
             headers,
+            details,
         } => {
-            get_request(&website_url, &headers, debug_option).await?;
+            match_options_get(&website_url, &headers, debug_option, details).await?;
         }
         Commands::Post {
             website_url,
