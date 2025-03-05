@@ -34,7 +34,7 @@ jobs:
 
       - name: Compress binary (macOS & Linux)
         if: runner.os != 'windows'
-        run: tar -czvf kiew-${{ runner.os }}.tar.gz -C target/release kiew*
+        run: tar -czvf kiew-${{ runner.os }}.tar.gz -C target/release kiew
 
       - name: Compress binary Windows
         if: runner.os == 'windows'
