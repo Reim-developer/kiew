@@ -17,16 +17,49 @@ pub enum Commands {
     /// GET request command
     #[command(name = "get")]
     Get {
+        /// Get detailed information instead of
+        /// request response body
+        #[arg(
+            short = 'I',
+            default_value = "false",
+            help = "Get detailed infomation instead 
+of request response body.
+➤ Example:
+\t kiew -I -w https://example.com
+        "
+        )]
+        details: bool,
+
         /// Website URL
-        #[arg(short = 'w', long = "web")]
+        #[arg(
+            short = 'w',
+            long = "web",
+            help = "Website you want send GET request.
+➤ Example:
+\t kiew -w https://example.com
+        "
+        )]
         website_url: String,
 
         /// Custom headers for request
-        #[arg(short = 'H', value_parser = parse_header)]
+        #[arg(short = 'H', value_parser = parse_header, help = "Header you want send to
+website target
+➤ Example:
+\t kiew -w https://example.com -H 'Content-Type: text/xml'
+        ")]
         headers: Vec<(HeaderName, HeaderValue)>,
 
         /// Debug option
-        #[arg(short = 'd', long = "debug", default_value = "false")]
+        #[arg(
+            short = 'd',
+            long = "debug",
+            default_value = "false",
+            help = "Enable debug mode. Will save response body
+to log file.
+➤ Example:
+\t kiew - https://example.com --debug       
+        "
+        )]
         debug_option: bool,
     },
 
