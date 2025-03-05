@@ -1,5 +1,8 @@
 [website]
-target = "https://example.com"
+target = [
+  "https://example.com",
+  "https://example2.com"
+  ]
 
 [headers]
 # Example JSON settings
