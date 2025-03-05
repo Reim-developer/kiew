@@ -19,10 +19,31 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Run check
+        run: cargo check --verbose
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -D warnings
+
+      - name: Run Tests
+        run: cargo test --verbose
+
       - name: Build
         run: cargo build --release --verbose
+
+      - name: Compress binary (macOS & Linux)
+        if: runner.os != 'windows'
+        run: tar -czvf kiew-${{ runner.os }}.tar.gz -C target/release kiew*
+
+      - name: Compress binary Windows
+        if: runner.os == 'windows'
+        run: powershell Compress-Archive -Path target/release/kiew* -DestinationPath kiew-${{ runner.os }}.zip
+
       - name: Upload Release Binary
         uses: actions/upload-artifact@v4
         with:
           name: kiew-${{ runner.os }}
-          path: target/release/kiew*
+          path: |
+            kiew-${{ runner.os }}.tar.gz
+            kiew-${{ runner.os }}.zip
