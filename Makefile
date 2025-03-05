@@ -9,6 +9,10 @@ HTTPBIN_DEL = "https://httpbin.org/delete"
 
 .PHONY: get_default get_example get_text get_json get_xml get_err get_debug test post_default post_error post_long
 
+# Formatter project
+fmt:
+	@cargo fmt
+
 ####################### GET COMMAND TEST
 # All
 get_default: get_httpbin # Default
@@ -41,6 +45,15 @@ get_err:
 # Test in case debug mode is enable
 get_debug:
 	$(CARGO) get -w "https://httpbin.org/headers" -H "User-Agent: KiewCLI" -H "Accept: application/json" -H "Custom-Header: This is a test message!" --debug
+
+# Test in case user wants get details 
+# request GET information instead of response body
+get_info:
+	$(CARGO) get -I -w "https://httpbin.org/headers"
+
+# With --debug option:
+get_info_debug:
+	$(CARGO) get -I -w "https://httpbin.org/headers" --debug
 
 ###################################################### 
 
