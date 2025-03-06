@@ -468,4 +468,4 @@ pub mod ultis {
 }
 
 /// Define Colors/LogLevel
-mod colors;
+pub mod colors;
