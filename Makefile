@@ -55,6 +55,18 @@ get_info:
 get_info_debug:
 	$(CARGO) get -I -w "https://httpbin.org/headers" --debug
 
+# With customize headers:
+get_info_headers:
+	$(CARGO) get -I -w "https://httpbin.org/headers" -H "User-Agent: KiewCLI" -H "Accept: application/json"
+
+# With read setting from TOML setting file
+get_with_setting:
+	$(CARGO) get -S z
+
+# Test error handling
+get_with_err:
+	$(CARGO) get -S error --web now
+
 ###################################################### 
 
 # FOR TEST:
