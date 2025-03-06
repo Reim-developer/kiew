@@ -9,7 +9,8 @@ use mime::Mime;
 use owo_colors::OwoColorize;
 use reqwest::header::{HeaderName, HeaderValue};
 use reqwest::{Client, Response};
-use std::fs::File;
+use toml::Value;
+use std::fs::{self, File};
 use std::io::Stdout;
 use std::path::Path;
 use std::time::Duration;
@@ -17,6 +18,7 @@ use std::{
     io::{self, Write},
     time::Instant,
 };
+use std::borrow::ToOwned;
 use syntect::{
     easy::HighlightLines,
     highlighting::{Style, ThemeSet},
@@ -232,7 +234,7 @@ async fn get_response_details(website_url: &str, debug: bool) -> Result<(), anyh
 
         let mut file = File::create(&file_name)?;
         let bytes = file.write(details.join("\n").as_bytes())?;
-        
+
         writeln!(&*stdout, "{}", details.join("\n"))?;
         log_stdout!(
             "{} Saved as {file_name} ({bytes} bytes), {:.2?}",
@@ -260,7 +262,7 @@ pub async fn match_options_get(
     website_url: &str,
     headers: &[(HeaderName, HeaderValue)],
     debug_enable: bool,
-    details: bool,
+    details: bool
 ) -> Result<(), anyhow::Error> {
     if details {
         get_response_details(website_url, debug_enable).await?;
@@ -271,5 +273,44 @@ pub async fn match_options_get(
             Info.fmt()
         );
     }
+    Ok(())
+}
+
+/// Read TOML file config setting
+fn read_toml_setting(file: &str) -> Result<Vec<String>, anyhow::Error> {
+    let buffer = fs::read_to_string(file)?;
+    let toml_source: Value = toml::from_str(&buffer)?;
+
+    let website_target =  {
+        let website_value =  toml_source.get("website")
+        .and_then(|website_url| website_url.get("website_url"));
+
+        match website_value {
+            Some(Value::String(value)) => vec![value.to_string()],
+            Some(Value::Array(value)) => value
+            .iter().filter_map(|result| result.as_str()
+            .map(ToOwned::to_owned)
+                )
+            .collect::<Vec<_>>(),
+            _ => {
+                return Err(anyhow!("Only support String & Array type"));
+            }
+        }
+    };
+
+    Ok(website_target)
+}
+/// Handling  setting argument
+/// 
+/// # Errors
+/// - `toml_source read fails`
+#[inline]
+pub fn match_setting_get(file_setting: &str) -> Result<(), anyhow::Error> {
+    let toml_source = read_toml_setting(file_setting)?;
+    
+    for source in toml_source {
+        log_stdout!("{source}");
+    }
+
     Ok(())
 }
