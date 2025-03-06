@@ -21,12 +21,14 @@
 //! SOFTWARE.
 //!
 use kiew::{cmds::handles::handles_commands, fatal};
+use kiew::colors::LogLevel::Error;
 
 #[doc = "Kiew is a Command Line Interface, for scraping website"]
 #[tokio::main]
 
 async fn main() {
+    let error_color = Error.fmt();
     if let Err(error) = handles_commands().await {
-        fatal!("{error}")
+        fatal!("{error_color} Fatal: {error}")
     }
 }
