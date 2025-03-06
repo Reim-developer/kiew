@@ -1,6 +1,7 @@
 use owo_colors::OwoColorize;
 
 /// Define log level colors
+#[non_exhaustive]
 pub enum LogLevel {
     /// When success
     Success,
@@ -12,6 +13,8 @@ pub enum LogLevel {
 
 impl LogLevel {
     /// Return color and log level as String
+    #[inline]
+    #[must_use]
     pub fn fmt(&self) -> String {
         match self {
             Self::Success => "[SUCCESS]".green().bold().to_string(),
