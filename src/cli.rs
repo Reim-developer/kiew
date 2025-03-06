@@ -17,6 +17,19 @@ pub enum Commands {
     /// GET request command
     #[command(name = "get")]
     Get {
+        /// For read setting in TOML file and
+        /// handling this
+        #[arg(
+            short = 'S',
+            default_value = "",
+            hide_default_value = true,
+            help = "Read your customize GET request setting to website.
+➤ Example:
+\t kiew -S <YOUR TOML SETTING FILE>
+"
+        )]
+        read_setting: Option<String>,
+
         /// Get detailed information instead of
         /// request response body
         #[arg(
@@ -34,12 +47,13 @@ of request response body.
         #[arg(
             short = 'w',
             long = "web",
+            required = false,
             help = "Website you want send GET request.
 ➤ Example:
 \t kiew -w https://example.com
         "
         )]
-        website_url: String,
+        website_url: Option<String>,
 
         /// Custom headers for request
         #[arg(short = 'H', value_parser = parse_header, help = "Header you want send to
