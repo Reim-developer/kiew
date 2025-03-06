@@ -10,7 +10,8 @@ use std::{fs::File, io::Write};
 /// system timestamp
 ///
 /// # Errors
-/// -
+/// - `File already exists`
+/// - `Create file fails`
 #[inline]
 pub fn generate_setting(file_name: &str) -> Result<(), anyhow::Error> {
     let time_now = Local::now().format("%H_%M_%S");
@@ -19,7 +20,7 @@ pub fn generate_setting(file_name: &str) -> Result<(), anyhow::Error> {
 # https://github.com/reim-developer/kiew
 
 [website]
-target = "" # Your website URL.
+website_url = "" # Your website URL.
 
 [headers]
 body = """ """ # Your header.
