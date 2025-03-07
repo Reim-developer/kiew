@@ -61,7 +61,7 @@ get_info_headers:
 
 # With read setting from TOML setting file
 get_with_setting:
-	$(CARGO) get -S z
+	$(CARGO) get -S MyCustomSetting.toml
 
 # Test error handling
 get_with_err:
