@@ -8,8 +8,10 @@ use lazy_static::lazy_static;
 use mime::Mime;
 use owo_colors::OwoColorize;
 use reqwest::header::{HeaderName, HeaderValue};
-use reqwest::{Client, Response};
-use toml::Value;
+use reqwest::{Client, RequestBuilder, Response};
+use serde_json::Value as JsonValue;
+use std::borrow::ToOwned;
+use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::Stdout;
 use std::path::Path;
@@ -18,7 +20,6 @@ use std::{
     io::{self, Write},
     time::Instant,
 };
-use std::borrow::ToOwned;
 use syntect::{
     easy::HighlightLines,
     highlighting::{Style, ThemeSet},
@@ -262,7 +263,7 @@ pub async fn match_options_get(
     website_url: &str,
     headers: &[(HeaderName, HeaderValue)],
     debug_enable: bool,
-    details: bool
+    details: bool,
 ) -> Result<(), anyhow::Error> {
     if details {
         get_response_details(website_url, debug_enable).await?;
@@ -277,40 +278,80 @@ pub async fn match_options_get(
 }
 
 /// Read TOML file config setting
-fn read_toml_setting(file: &str) -> Result<Vec<String>, anyhow::Error> {
+fn read_json_setting(
+    file: &str,
+    request_builder: RequestBuilder,
+) -> Result<RequestBuilder, anyhow::Error> {
     let buffer = fs::read_to_string(file)?;
-    let toml_source: Value = toml::from_str(&buffer)?;
+    let json_source: JsonValue = serde_json::from_str(&buffer)?;
 
-    let website_target =  {
-        let website_value =  toml_source.get("website")
-        .and_then(|website_url| website_url.get("website_url"));
+    let headers = json_source
+        .get("headers")
+        .and_then(JsonValue::as_object)
+        .map(|body| {
+            body.iter()
+                .filter_map(|(key, value)| {
+                    let header_name = key.parse::<HeaderName>().ok()?;
+                    let value_header = value.as_str()?.parse::<HeaderValue>().ok()?;
+                    Some((header_name, value_header))
+                })
+                .collect::<HashMap<_, _>>()
+        })
+        .unwrap_or_default();
 
-        match website_value {
-            Some(Value::String(value)) => vec![value.to_string()],
-            Some(Value::Array(value)) => value
-            .iter().filter_map(|result| result.as_str()
-            .map(ToOwned::to_owned)
-                )
-            .collect::<Vec<_>>(),
-            _ => {
-                return Err(anyhow!("Only support String & Array type"));
-            }
-        }
-    };
+    let mut request_ref = request_builder;
+    for (key, value) in headers {
+        request_ref = request_ref.header(key, value);
+    }
+
+    Ok(request_ref)
+}
+
+/// Read URL from JSON file
+fn read_json_url_target(file: &str) -> Result<Vec<String>, anyhow::Error> {
+    let buffer = fs::read_to_string(file)?;
+    let json_source: JsonValue = serde_json::from_str(&buffer)?;
+
+    let website_target: Vec<String> = json_source
+        .get("website_url")
+        .and_then(JsonValue::as_array)
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|value| value.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
 
     Ok(website_target)
 }
+
+/// Make GET request with
+/// source from TOML setting file.
+///
+/// # Errors
+/// - `builder error`
+async fn get_with_setting(website_url: &str, file_setting: &str) -> Result<(), anyhow::Error> {
+    let request_builder = CLIENT.get(website_url);
+
+    let request = read_json_setting(file_setting, request_builder)?;
+    let response = request.send().await?.text().await?;
+
+    log_stdout!("{response}");
+
+    Ok(())
+}
+
+/// Request
 /// Handling  setting argument
-/// 
+///
 /// # Errors
 /// - `toml_source read fails`
 #[inline]
-pub fn match_setting_get(file_setting: &str) -> Result<(), anyhow::Error> {
-    let toml_source = read_toml_setting(file_setting)?;
-    
-    for source in toml_source {
-        log_stdout!("{source}");
-    }
+pub async fn match_setting_get(file_setting: &str) -> Result<(), anyhow::Error> {
+    let website_urls = read_json_url_target(file_setting)?;
 
+    for url in website_urls {
+        get_with_setting(&url, file_setting).await?;
+    }
     Ok(())
 }
