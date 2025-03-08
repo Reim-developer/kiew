@@ -20,8 +20,8 @@
 //! OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //! SOFTWARE.
 //!
-use kiew::{cmds::handles::handles_commands, fatal};
 use kiew::colors::LogLevel::Error;
+use kiew::{cmds::handles::handles_commands, fatal};
 
 #[doc = "Kiew is a Command Line Interface, for scraping website"]
 #[tokio::main]
