@@ -13,6 +13,7 @@ categories = ["command-line-interface"]
 anyhow = "1.0.95"
 chrono = "0.4.39"
 clap = { version = "4.5.29", features = ["derive"] }
+futures = "0.3.31"
 indicatif = "0.17.11"
 lazy_static = "1.5.0"
 mime = "0.3.17"

@@ -3,6 +3,7 @@ use crate::ultis::content_type::ContentType;
 use crate::{colors::LogLevel::Error, colors::LogLevel::Info, colors::LogLevel::Success, fatal};
 use anyhow::{anyhow, Ok, Result};
 use chrono::Local;
+use futures::future::join_all;
 use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
 use mime::Mime;
@@ -26,6 +27,7 @@ use syntect::{
     parsing::SyntaxSet,
     util::{as_24_bit_terminal_escaped, LinesWithEndings},
 };
+use tokio::task::JoinHandle;
 use url::Url;
 
 lazy_static! {
@@ -341,17 +343,128 @@ async fn get_with_setting(website_url: &str, file_setting: &str) -> Result<(), a
     Ok(())
 }
 
+/// Read configuration file,
+/// then, send GET request to
+/// this website, and stdout to
+/// log file (if enabled).
+async fn get_details_from_settings(
+    website_urls: Vec<String>,
+    debug: bool,
+) -> Result<(), anyhow::Error> {
+    let start_time = Instant::now();
+    let mut details: Vec<String> = Vec::new();
+
+    if website_urls.is_empty() {
+        return Err(anyhow!("URL is empty."));
+    }
+
+    let mut count: i32 = 0;
+    for url in website_urls {
+        let response = CLIENT.get(&url).send().await?;
+        let content_type = response
+            .headers()
+            .get("Content-Type")
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or("Unknown Content Type");
+
+        let content_length = response
+            .content_length()
+            .map_or("Unknown content length".to_owned(), |ct| ct.to_string());
+        let status_code = response.status();
+        let http_version = response.version();
+        let headers = response.headers();
+        count = count.saturating_add(1);
+
+        let time_now = Local::now().format("%Y-%m-%d %H:%M:%S");
+        details.push(format!(
+            "
+➤ Basic Information:
+\t Number: {count}
+\t Website URL: {url}
+\t Status Code: {status_code}
+\t Content Type: {content_type}
+\t Content length: {content_length}
+\t HTTP Version: {http_version:?}
+\t Date: {time_now}
+        "
+        ));
+
+        let response_headers: Vec<String> = headers
+            .iter()
+            .map(|(key, value)| {
+                format!(
+                    "\t {}: {}",
+                    key.as_str().to_uppercase(),
+                    value.to_str().unwrap_or("Unknown")
+                )
+            })
+            .collect();
+
+        details.push("➤ Headers:".to_owned());
+        details.push(response_headers.join("\n"));
+    }
+
+    if debug {
+        let timestamp_now = Local::now().format("%H_%M_%S");
+        let mut file_name = format!("{timestamp_now}.txt");
+
+        let mut number: i32 = 0;
+        while Path::new(&file_name).exists() {
+            number = number.saturating_add(1);
+            file_name = format!("{timestamp_now}_{number}.txt");
+        }
+
+        let mut file = File::create(&file_name)?;
+        let bytes = file.write(details.join("\n").as_bytes())?;
+
+        writeln!(&*stdout, "{}", details.join("\n"))?;
+        log_stdout!(
+            "{} Saved as {file_name} ({bytes} bytes) ({count} Website), {:.2?}",
+            Success.fmt(),
+            start_time.elapsed()
+        );
+    } else {
+        writeln!(&*stdout, "{}", details.join("\n"))?;
+        log_stdout!(
+            "{} Finished in {:.2?}. ({count} Website) Use --debug to enable debug mode",
+            Success.fmt(),
+            start_time.elapsed()
+        );
+    }
+    Ok(())
+}
+
 /// Request
 /// Handling  setting argument
 ///
 /// # Errors
 /// - `toml_source read fails`
 #[inline]
-pub async fn match_setting_get(file_setting: &str) -> Result<(), anyhow::Error> {
-    let website_urls = read_json_url_target(file_setting)?;
+pub async fn match_setting_get(
+    file_setting: String,
+    details: bool,
+    debug: bool,
+) -> Result<(), anyhow::Error> {
+    let website_urls = read_json_url_target(&file_setting)?;
 
-    for url in website_urls {
-        get_with_setting(&url, file_setting).await?;
+    if details {
+        let task: JoinHandle<Result<(), anyhow::Error>> =
+            tokio::spawn(async move { get_details_from_settings(website_urls, debug).await });
+        task.await??;
+    } else {
+        let tasks: Vec<JoinHandle<Result<(), anyhow::Error>>> = website_urls
+            .into_iter()
+            .map(|url| {
+                let file = file_setting.clone();
+                tokio::spawn(async move { get_with_setting(&url, &file).await })
+            })
+            .collect();
+
+        let results = join_all(tasks).await;
+        for result in results {
+            result??;
+        }
     }
+
     Ok(())
 }

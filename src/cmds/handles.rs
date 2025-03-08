@@ -49,7 +49,7 @@ pub async fn handles_commands() -> Result<(), anyhow::Error> {
 
             if let Some(settings) = read_setting {
                 if !settings.is_empty() {
-                    match_setting_get(&settings).await?;
+                    match_setting_get(settings, details, debug_option).await?;
                 }
             }
         }
